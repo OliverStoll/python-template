@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.Uri;
 import android.widget.RemoteViews;
 
@@ -31,7 +32,15 @@ public class SobrietyWidget extends AppWidgetProvider {
         RemoteViews views = new RemoteViews(ctx.getPackageName(), R.layout.widget);
 
         int outerPx = Settings.dpToPx(ctx, Settings.outerPaddingDp(Settings.rowPaddingDp(ctx)));
-        views.setViewPadding(R.id.widget_root, outerPx, outerPx, outerPx, outerPx);
+        views.setViewPadding(R.id.widget_content, outerPx, outerPx, outerPx, outerPx);
+
+        // Tint the background image rather than the View's background, so the
+        // rounded corners survive; alpha rides separately from the RGB tint.
+        int bg = Settings.bgColor(ctx);
+        views.setInt(R.id.widget_bg, "setColorFilter", Settings.opaque(bg));
+        views.setInt(R.id.widget_bg, "setImageAlpha", Color.alpha(bg));
+
+        views.setTextColor(R.id.widget_empty, Settings.unitColor(Settings.textColor(ctx)));
 
         Intent data = new Intent(ctx, WidgetService.class);
         data.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId);

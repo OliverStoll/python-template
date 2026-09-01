@@ -20,7 +20,13 @@ public class WidgetService extends RemoteViewsService {
 
         private final Context ctx;
         private List<Tracker> items = new ArrayList<Tracker>();
+
+        // Snapshotted in onDataSetChanged so every row of one pass agrees.
         private int textSp = Settings.DEFAULT_TEXT_SP;
+        private int textColor = Settings.DEFAULT_TEXT_COLOR;
+        private int valueColor = Settings.DEFAULT_VALUE_COLOR;
+        private int unitColor = Settings.DEFAULT_TEXT_COLOR;
+        private int unitMode = Settings.DEFAULT_UNIT_MODE;
         private int padVerticalPx;
         private int padHorizontalPx;
 
@@ -33,6 +39,10 @@ public class WidgetService extends RemoteViewsService {
         @Override public void onDataSetChanged() {
             items = Store.load(ctx);
             textSp = Settings.textSp(ctx);
+            textColor = Settings.textColor(ctx);
+            valueColor = Settings.valueColor(ctx);
+            unitColor = Settings.unitColor(textColor);
+            unitMode = Settings.unitMode(ctx);
             int padDp = Settings.rowPaddingDp(ctx);
             padVerticalPx = Settings.dpToPx(ctx, padDp);
             padHorizontalPx = Settings.dpToPx(ctx, Settings.rowPaddingHorizontalDp(padDp));
@@ -51,9 +61,11 @@ public class WidgetService extends RemoteViewsService {
             if (position < 0 || position >= items.size()) return row;
             Tracker t = items.get(position);
             int days = t.days();
+
             row.setTextViewText(R.id.w_icon, t.icon);
             row.setTextViewText(R.id.w_name, t.name);
-            row.setTextViewText(R.id.w_days, days < 0 ? "—" : String.valueOf(days) + "d");
+            row.setTextViewText(R.id.w_days, Format.value(days, unitMode));
+            row.setTextViewText(R.id.w_unit, Format.unit(days, unitMode));
 
             row.setViewPadding(R.id.widget_item_root,
                     padHorizontalPx, padVerticalPx, padHorizontalPx, padVerticalPx);
@@ -61,6 +73,12 @@ public class WidgetService extends RemoteViewsService {
                     Settings.iconSp(textSp));
             row.setTextViewTextSize(R.id.w_name, TypedValue.COMPLEX_UNIT_SP, textSp);
             row.setTextViewTextSize(R.id.w_days, TypedValue.COMPLEX_UNIT_SP, textSp);
+            row.setTextViewTextSize(R.id.w_unit, TypedValue.COMPLEX_UNIT_SP,
+                    Settings.unitSp(textSp));
+
+            row.setTextColor(R.id.w_name, textColor);
+            row.setTextColor(R.id.w_days, valueColor);
+            row.setTextColor(R.id.w_unit, unitColor);
 
             row.setOnClickFillInIntent(R.id.widget_item_root, new Intent());
             return row;

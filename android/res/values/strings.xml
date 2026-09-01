@@ -11,4 +11,12 @@
     <string name="settings_text_size">Text size: %1$d sp</string>
     <string name="settings_row_padding">Row spacing: %1$d dp</string>
     <string name="settings_reset">Reset</string>
+    <string name="settings_save">Save</string>
+    <string name="settings_colors">Colours</string>
+    <string name="settings_color_bg">Background</string>
+    <string name="settings_color_text">Name text</string>
+    <string name="settings_color_value">Number</string>
+    <string name="settings_format">Number format</string>
+    <string name="settings_format_adaptive">Adaptive — days, then weeks, months, years</string>
+    <string name="settings_format_days">Always days</string>
 </resources>

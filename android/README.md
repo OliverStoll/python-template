@@ -19,33 +19,61 @@ start date; the app and the widget both show the number of days since.
 | `src/…/SobrietyWidget.java` | `AppWidgetProvider` for the home-screen widget |
 | `src/…/WidgetService.java` | `RemoteViewsFactory` backing the widget's list |
 | `src/…/Store.java` | Persistence — one JSON blob in `SharedPreferences` |
-| `src/…/Settings.java` | Widget text size and row spacing |
+| `src/…/Settings.java` | Every widget appearance value |
+| `src/…/SettingsActivity.java` | The settings screen and its live preview |
+| `src/…/ColorPicker.java` | Swatches, opacity slider, hex field |
+| `src/…/Format.java` | Day counts to "4 months" / "128 days" |
 | `src/…/Days.java` | Calendar-day arithmetic that survives DST |
 | `build.sh` | Builds `out/Sober.apk` |
 | `verify.sh` | Checks the APK's signature, alignment and manifest |
+| `test.sh` | Plain-JVM tests for the formatting and colour logic |
 
 No Gradle, no AndroidX, no third-party runtime dependencies — just the platform
 framework, so the whole APK is 28 KB.
 
 ## Widget appearance
 
-The gear in the app's header opens **Widget appearance**: two sliders over a
-live preview of a widget row.
+The gear in the app's header opens the settings screen — everything below is
+edited over a live preview of a real widget row.
 
-| | Range | Default |
-| --- | --- | --- |
-| Text size | 8–22 sp | 13 sp |
-| Row spacing | 0–14 dp | 3 dp |
+| | |
+| --- | --- |
+| Text size | 8–22 sp, default 13 |
+| Row spacing | 0–14 dp, default 3 |
+| Background colour | any colour, with an opacity slider |
+| Name text colour | any colour |
+| Number colour | any colour |
+| Number format | adaptive, or always days |
 
-Row spacing also drives the widget's outer padding (one step wider) and the
-rows' horizontal padding, so a single slider tightens the whole thing. The
-emoji sits two points above the text size.
+Colours come from a 16-swatch grid, an opacity slider, or a `#RRGGBB` /
+`#AARRGGBB` hex field. The unit word ("days", "weeks") is drawn at 65% of the
+name colour's alpha, so it recedes without needing a fourth setting. Row
+spacing also drives the widget's outer padding and the rows' horizontal
+padding, so a single slider tightens the whole thing.
 
-Both are applied at runtime via `RemoteViews.setTextViewTextSize` and
-`setViewPadding` rather than being baked into the layout, so saving redraws
-placed widgets immediately — no reinstall, no re-adding the widget. The values
-in the layout XML are the defaults above, which keeps the first frame correct
-before the adapter runs.
+**Number format.** *Adaptive* picks the largest unit that still reads honestly:
+
+| Days | Shown |
+| --- | --- |
+| 0–6 | `5 days` |
+| 7–55 | `3 weeks` |
+| 56–364 | `4 months` |
+| 365+ | `2 years` |
+
+*Always days* keeps the raw count — `128 days` — however large it gets. Either
+way the number and the unit are separate views, so they get real spacing
+between them and can be coloured apart.
+
+All of it is applied at runtime — `setTextViewTextSize`, `setViewPadding`,
+`setTextColor`, and a tinted background image — rather than being baked into
+the layout, so saving redraws placed widgets immediately. No reinstall, no
+re-adding the widget. The layout XML carries the same values as defaults, which
+keeps the first frame correct before the adapter runs.
+
+The background is an `ImageView` holding a white rounded-rectangle shape,
+tinted with `setColorFilter` and faded with `setImageAlpha`. A plain
+`setBackgroundColor` would have been simpler but would have squared off the
+corners.
 
 ## Install
 
@@ -65,6 +93,7 @@ Requires Android 7.0 (API 24) or newer.
 ```
 ./build.sh      # fetches its own toolchain on first run, writes out/Sober.apk
 ./verify.sh     # signature + alignment + manifest check
+./test.sh       # formatting and colour-parsing tests, no device needed
 ```
 
 `build.sh` needs only a JDK (17+), `python3`, `curl`, `unzip` and `zip`. It does

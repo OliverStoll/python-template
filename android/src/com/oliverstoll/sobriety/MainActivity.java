@@ -5,10 +5,10 @@ import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,7 +19,6 @@ import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.SeekBar;
 import android.widget.TextView;
 
 import java.util.Calendar;
@@ -64,7 +63,7 @@ public class MainActivity extends Activity {
         findViewById(R.id.settings).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showSettings();
+                startActivity(new Intent(MainActivity.this, SettingsActivity.class));
             }
         });
 
@@ -195,103 +194,6 @@ public class MainActivity extends Activity {
                 .show();
     }
 
-    /** Two sliders over a live copy of a widget row. */
-    private void showSettings() {
-        View form = LayoutInflater.from(this).inflate(R.layout.dialog_settings, null);
-
-        final View previewRoot = form.findViewById(R.id.preview_root);
-        final View rowOne = form.findViewById(R.id.preview_row_one);
-        final View rowTwo = form.findViewById(R.id.preview_row_two);
-        final TextView textLabel = (TextView) form.findViewById(R.id.label_text_size);
-        final TextView padLabel = (TextView) form.findViewById(R.id.label_row_padding);
-        final SeekBar textSeek = (SeekBar) form.findViewById(R.id.seek_text_size);
-        final SeekBar padSeek = (SeekBar) form.findViewById(R.id.seek_row_padding);
-
-        fillPreviewRow(rowOne, 0);
-        fillPreviewRow(rowTwo, 1);
-
-        textSeek.setMax(Settings.MAX_TEXT_SP - Settings.MIN_TEXT_SP);
-        padSeek.setMax(Settings.MAX_ROW_PADDING_DP - Settings.MIN_ROW_PADDING_DP);
-
-        final Runnable apply = new Runnable() {
-            @Override
-            public void run() {
-                int textSp = textSeek.getProgress() + Settings.MIN_TEXT_SP;
-                int padDp = padSeek.getProgress() + Settings.MIN_ROW_PADDING_DP;
-                textLabel.setText(getString(R.string.settings_text_size, textSp));
-                padLabel.setText(getString(R.string.settings_row_padding, padDp));
-                stylePreviewRow(rowOne, textSp, padDp);
-                stylePreviewRow(rowTwo, textSp, padDp);
-                int outer = Settings.dpToPx(MainActivity.this, Settings.outerPaddingDp(padDp));
-                previewRoot.setPadding(outer, outer, outer, outer);
-            }
-        };
-
-        SeekBar.OnSeekBarChangeListener live = new SeekBar.OnSeekBarChangeListener() {
-            @Override public void onProgressChanged(SeekBar bar, int value, boolean fromUser) {
-                apply.run();
-            }
-            @Override public void onStartTrackingTouch(SeekBar bar) {}
-            @Override public void onStopTrackingTouch(SeekBar bar) {}
-        };
-        textSeek.setOnSeekBarChangeListener(live);
-        padSeek.setOnSeekBarChangeListener(live);
-
-        textSeek.setProgress(Settings.textSp(this) - Settings.MIN_TEXT_SP);
-        padSeek.setProgress(Settings.rowPaddingDp(this) - Settings.MIN_ROW_PADDING_DP);
-        apply.run();
-
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.settings_title)
-                .setView(form)
-                .setNegativeButton("Cancel", null)
-                .setNeutralButton(R.string.settings_reset, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface d, int which) {
-                        Settings.save(MainActivity.this,
-                                Settings.DEFAULT_TEXT_SP, Settings.DEFAULT_ROW_PADDING_DP);
-                    }
-                })
-                .setPositiveButton("Save", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface d, int which) {
-                        Settings.save(MainActivity.this,
-                                textSeek.getProgress() + Settings.MIN_TEXT_SP,
-                                padSeek.getProgress() + Settings.MIN_ROW_PADDING_DP);
-                    }
-                })
-                .show();
-    }
-
-    /** Show a real counter in the preview when there is one, else a stand-in. */
-    private void fillPreviewRow(View row, int index) {
-        String icon = index == 0 ? "\ud83c\udf7a" : "\ud83d\udeac";
-        String name = index == 0 ? "Alcohol" : "Nicotine";
-        String days = index == 0 ? "128d" : "41d";
-        if (index < trackers.size()) {
-            Tracker t = trackers.get(index);
-            icon = t.icon;
-            name = t.name;
-            days = t.days() < 0 ? "\u2014" : t.days() + "d";
-        }
-        ((TextView) row.findViewById(R.id.w_icon)).setText(icon);
-        ((TextView) row.findViewById(R.id.w_name)).setText(name);
-        ((TextView) row.findViewById(R.id.w_days)).setText(days);
-    }
-
-    private void stylePreviewRow(View row, int textSp, int padDp) {
-        int vPad = Settings.dpToPx(this, padDp);
-        int hPad = Settings.dpToPx(this, Settings.rowPaddingHorizontalDp(padDp));
-        row.setPadding(hPad, vPad, hPad, vPad);
-        setSp(row.findViewById(R.id.w_icon), Settings.iconSp(textSp));
-        setSp(row.findViewById(R.id.w_name), textSp);
-        setSp(row.findViewById(R.id.w_days), textSp);
-    }
-
-    private void setSp(View view, float sp) {
-        ((TextView) view).setTextSize(TypedValue.COMPLEX_UNIT_SP, sp);
-    }
-
     private int dp(int value) {
         return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
     }
@@ -316,12 +218,12 @@ public class MainActivity extends Activity {
             ((TextView) v.findViewById(R.id.icon)).setText(t.icon);
             ((TextView) v.findViewById(R.id.name)).setText(t.name);
             ((TextView) v.findViewById(R.id.since)).setText(Days.humanSince(t.startMillis));
+            int mode = Settings.unitMode(MainActivity.this);
             TextView dayView = (TextView) v.findViewById(R.id.days);
-            dayView.setText(days < 0 ? "—" : String.valueOf(days));
+            dayView.setText(Format.value(days, mode));
             dayView.setTextColor(days < 0 ? Color.parseColor("#93A1B0")
                                           : getResources().getColor(R.color.accent));
-            ((TextView) v.findViewById(R.id.days_label))
-                    .setText(Math.abs(days) == 1 ? "day" : "days");
+            ((TextView) v.findViewById(R.id.days_label)).setText(Format.unit(days, mode));
             return v;
         }
     }

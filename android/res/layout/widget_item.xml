@@ -37,4 +37,13 @@
         android:textColor="@color/text"
         android:textSize="13sp"
         android:textStyle="bold" />
+
+    <!-- Split from the number so the two can be spaced and coloured apart. -->
+    <TextView
+        android:id="@+id/w_unit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="4dp"
+        android:textColor="@color/text_dim"
+        android:textSize="11sp" />
 </LinearLayout>
