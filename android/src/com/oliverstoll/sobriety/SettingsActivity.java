@@ -69,7 +69,10 @@ public class SettingsActivity extends Activity {
                 refreshPreview();
             }
             @Override public void onStartTrackingTouch(SeekBar bar) {}
-            @Override public void onStopTrackingTouch(SeekBar bar) {}
+            @Override public void onStopTrackingTouch(SeekBar bar) {
+                // Commit once the finger lifts, not on every pixel of the drag.
+                applyNow();
+            }
         };
         textSeek.setOnSeekBarChangeListener(live);
         padSeek.setOnSeekBarChangeListener(live);
@@ -77,15 +80,13 @@ public class SettingsActivity extends Activity {
         formatGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(RadioGroup group, int checkedId) {
                 refreshPreview();
+                applyNow();
             }
         });
 
         findViewById(R.id.save).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Settings.save(SettingsActivity.this,
-                        chosenTextSp(), chosenPadDp(),
-                        colors[BACKGROUND], colors[TEXT], colors[VALUE], chosenMode());
                 finish();
             }
         });
@@ -101,6 +102,7 @@ public class SettingsActivity extends Activity {
                 formatGroup.check(Settings.DEFAULT_UNIT_MODE == Format.MODE_DAYS
                         ? R.id.format_days : R.id.format_adaptive);
                 refreshPreview();
+                applyNow();
             }
         });
 
@@ -109,6 +111,18 @@ public class SettingsActivity extends Activity {
         formatGroup.check(Settings.unitMode(this) == Format.MODE_DAYS
                 ? R.id.format_days : R.id.format_adaptive);
         refreshPreview();
+    }
+
+    /**
+     * Writes the form straight through to storage, which repaints the widget.
+     *
+     * <p>There is no Save step: a settings screen that stages changes behind a
+     * button loses them silently when the user backs out, and the whole point
+     * of the preview is that what you see is already what the widget shows.
+     */
+    private void applyNow() {
+        Settings.save(this, chosenTextSp(), chosenPadDp(),
+                colors[BACKGROUND], colors[TEXT], colors[VALUE], chosenMode());
     }
 
     private int chosenTextSp() {
@@ -161,6 +175,7 @@ public class SettingsActivity extends Activity {
                             public void onPicked(int color) {
                                 colors[slot] = color;
                                 refreshPreview();
+                                applyNow();
                             }
                         });
             }

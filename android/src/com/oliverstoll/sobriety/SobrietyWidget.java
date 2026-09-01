@@ -13,6 +13,19 @@ public class SobrietyWidget extends AppWidgetProvider {
 
     @Override
     public void onUpdate(Context ctx, AppWidgetManager mgr, int[] appWidgetIds) {
+        renderAll(ctx, mgr, appWidgetIds);
+    }
+
+    /**
+     * Redraws widgets directly, without going through a broadcast.
+     *
+     * <p>{@code updateAppWidget} is callable from any process that owns the
+     * widget, so the app can repaint its own widgets synchronously. Asking the
+     * system to deliver ACTION_APPWIDGET_UPDATE back to this receiver instead
+     * is a longer path with more ways to be dropped.
+     */
+    static void renderAll(Context ctx, AppWidgetManager mgr, int[] appWidgetIds) {
+        if (appWidgetIds == null) return;
         for (int id : appWidgetIds) render(ctx, mgr, id);
     }
 
@@ -28,7 +41,7 @@ public class SobrietyWidget extends AppWidgetProvider {
         }
     }
 
-    private void render(Context ctx, AppWidgetManager mgr, int widgetId) {
+    private static void render(Context ctx, AppWidgetManager mgr, int widgetId) {
         RemoteViews views = new RemoteViews(ctx.getPackageName(), R.layout.widget);
 
         int outerPx = Settings.dpToPx(ctx, Settings.outerPaddingDp(Settings.rowPaddingDp(ctx)));

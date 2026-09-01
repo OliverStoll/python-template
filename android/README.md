@@ -45,8 +45,9 @@ edited over a live preview of a real widget row.
 | Number colour | any colour |
 | Number format | adaptive, or always days |
 
-Colours come from a 16-swatch grid, an opacity slider, or a `#RRGGBB` /
-`#AARRGGBB` hex field. The unit word ("days", "weeks") is drawn at 65% of the
+Colours come from a picker with a saturation/value square, a hue strip, an
+opacity strip (background only), eight quick swatches, and a `#RRGGBB` /
+`#AARRGGBB` hex field — all driven off one HSVA value, so they stay in sync. The unit word ("days", "weeks") is drawn at 65% of the
 name colour's alpha, so it recedes without needing a fourth setting. Row
 spacing also drives the widget's outer padding and the rows' horizontal
 padding, so a single slider tightens the whole thing.
@@ -64,10 +65,14 @@ padding, so a single slider tightens the whole thing.
 way the number and the unit are separate views, so they get real spacing
 between them and can be coloured apart.
 
+There is no Save button — every change is written through and repaints the
+widget straight away (slider changes commit when your finger lifts). A settings
+screen that stages changes behind a button loses them silently when you back
+out of it.
+
 All of it is applied at runtime — `setTextViewTextSize`, `setViewPadding`,
 `setTextColor`, and a tinted background image — rather than being baked into
-the layout, so saving redraws placed widgets immediately. No reinstall, no
-re-adding the widget. The layout XML carries the same values as defaults, which
+the layout, so placed widgets update with no reinstall and no re-adding. The layout XML carries the same values as defaults, which
 keeps the first frame correct before the adapter runs.
 
 The background is an `ImageView` holding a white rounded-rectangle shape,
@@ -124,6 +129,12 @@ JDK 9 sealed off.)
 ## Notes
 
 - Day counts roll over at local midnight. The widget refreshes hourly, on
-  `ACTION_DATE_CHANGED`, and whenever you edit a counter.
+  `ACTION_DATE_CHANGED`, and whenever you edit a counter or a setting.
+- `Store.notifyWidgets` repaints widgets by calling `updateAppWidget` directly
+  rather than broadcasting `ACTION_APPWIDGET_UPDATE` to our own receiver. Row
+  contents reach the widget through the `RemoteViewsFactory`, but the frame —
+  background colour, outer padding — is only set in the provider's render pass,
+  so a dropped broadcast used to leave the background stale while the rows
+  updated correctly.
 - Data lives only on the device, in `SharedPreferences`. There is no network
   permission in the manifest.

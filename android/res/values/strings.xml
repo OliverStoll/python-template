@@ -11,8 +11,9 @@
     <string name="settings_text_size">Text size: %1$d sp</string>
     <string name="settings_row_padding">Row spacing: %1$d dp</string>
     <string name="settings_reset">Reset</string>
-    <string name="settings_save">Save</string>
+    <string name="settings_save">Done</string>
     <string name="settings_colors">Colours</string>
+    <string name="settings_live">Changes apply to the widget straight away.</string>
     <string name="settings_color_bg">Background</string>
     <string name="settings_color_text">Name text</string>
     <string name="settings_color_value">Number</string>
