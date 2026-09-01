@@ -3,11 +3,13 @@ package com.oliverstoll.sobriety;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,6 +21,7 @@ import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.TimePicker;
 import android.widget.TextView;
 
 import java.util.Calendar;
@@ -28,6 +31,18 @@ public class MainActivity extends Activity {
 
     private static final String[] SUGGESTED_ICONS = {
             "🍺", "🚬", "🍩", "🎰", "📱", "☕", "🍷", "💊", "🥤", "🎮", "🛒", "✨"
+    };
+
+    /** Keeps a minutes-old counter ticking while the list is on screen. */
+    private static final long TICK_MS = 20000L;
+
+    private final Handler ticker = new Handler();
+    private final Runnable tick = new Runnable() {
+        @Override
+        public void run() {
+            adapter.notifyDataSetChanged();
+            ticker.postDelayed(this, TICK_MS);
+        }
     };
 
     private List<Tracker> trackers;
@@ -73,9 +88,16 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        // The day may have rolled over while the app sat in the background.
+        // Time has passed while the app sat in the background.
         trackers = Store.load(this);
         refresh();
+        ticker.postDelayed(tick, TICK_MS);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        ticker.removeCallbacks(tick);
     }
 
     private void refresh() {
@@ -99,13 +121,16 @@ public class MainActivity extends Activity {
         final EditText nameIn = (EditText) form.findViewById(R.id.in_name);
         final EditText iconIn = (EditText) form.findViewById(R.id.in_icon);
         final Button dateBtn = (Button) form.findViewById(R.id.in_date);
+        final Button timeBtn = (Button) form.findViewById(R.id.in_time);
         LinearLayout picker = (LinearLayout) form.findViewById(R.id.icon_picker);
 
-        final long[] chosen = { isNew ? Days.startOfDay(System.currentTimeMillis())
-                                      : existing.startMillis };
+        // A new counter starts now, to the minute — that is what makes the
+        // first hours readable instead of sitting at "0 days" until midnight.
+        final long[] chosen = { isNew ? System.currentTimeMillis() : existing.startMillis };
         nameIn.setText(isNew ? "" : existing.name);
         iconIn.setText(isNew ? SUGGESTED_ICONS[0] : existing.icon);
-        dateBtn.setText(Days.format(chosen[0]));
+        dateBtn.setText(Days.formatDate(chosen[0]));
+        timeBtn.setText(Days.formatTime(chosen[0]));
 
         for (int i = 0; i < SUGGESTED_ICONS.length; i++) {
             final String emoji = SUGGESTED_ICONS[i];
@@ -125,22 +150,39 @@ public class MainActivity extends Activity {
         dateBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Calendar c = Calendar.getInstance();
-                c.setTimeInMillis(chosen[0]);
                 DatePickerDialog dlg = new DatePickerDialog(MainActivity.this,
                         new DatePickerDialog.OnDateSetListener() {
                             @Override
                             public void onDateSet(DatePicker view, int y, int m, int d) {
-                                Calendar picked = Calendar.getInstance();
-                                picked.set(y, m, d, 0, 0, 0);
-                                picked.set(Calendar.MILLISECOND, 0);
-                                chosen[0] = picked.getTimeInMillis();
-                                dateBtn.setText(Days.format(chosen[0]));
+                                // Keep the time of day; only the date moves.
+                                chosen[0] = Days.withDate(chosen[0], y, m, d);
+                                dateBtn.setText(Days.formatDate(chosen[0]));
+                                timeBtn.setText(Days.formatTime(chosen[0]));
                             }
                         },
-                        c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH));
+                        Days.field(chosen[0], Calendar.YEAR),
+                        Days.field(chosen[0], Calendar.MONTH),
+                        Days.field(chosen[0], Calendar.DAY_OF_MONTH));
                 dlg.getDatePicker().setMaxDate(System.currentTimeMillis());
                 dlg.show();
+            }
+        });
+
+        timeBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new TimePickerDialog(MainActivity.this,
+                        new TimePickerDialog.OnTimeSetListener() {
+                            @Override
+                            public void onTimeSet(TimePicker view, int hour, int minute) {
+                                chosen[0] = Days.withTime(chosen[0], hour, minute);
+                                timeBtn.setText(Days.formatTime(chosen[0]));
+                            }
+                        },
+                        Days.field(chosen[0], Calendar.HOUR_OF_DAY),
+                        Days.field(chosen[0], Calendar.MINUTE),
+                        android.text.format.DateFormat.is24HourFormat(MainActivity.this))
+                        .show();
             }
         });
 
@@ -214,16 +256,16 @@ public class MainActivity extends Activity {
                         .inflate(R.layout.row, parent, false);
             }
             Tracker t = trackers.get(position);
-            int days = t.days();
+            long elapsed = t.elapsed();
+            int mode = Settings.unitMode(MainActivity.this);
             ((TextView) v.findViewById(R.id.icon)).setText(t.icon);
             ((TextView) v.findViewById(R.id.name)).setText(t.name);
-            ((TextView) v.findViewById(R.id.since)).setText(Days.humanSince(t.startMillis));
-            int mode = Settings.unitMode(MainActivity.this);
+            ((TextView) v.findViewById(R.id.since)).setText(Days.startedAt(t.startMillis));
             TextView dayView = (TextView) v.findViewById(R.id.days);
-            dayView.setText(Format.value(days, mode));
-            dayView.setTextColor(days < 0 ? Color.parseColor("#93A1B0")
-                                          : getResources().getColor(R.color.accent));
-            ((TextView) v.findViewById(R.id.days_label)).setText(Format.unit(days, mode));
+            dayView.setText(Format.value(elapsed, mode));
+            dayView.setTextColor(elapsed < 0 ? Color.parseColor("#93A1B0")
+                                             : getResources().getColor(R.color.accent));
+            ((TextView) v.findViewById(R.id.days_label)).setText(Format.unit(elapsed, mode));
             return v;
         }
     }

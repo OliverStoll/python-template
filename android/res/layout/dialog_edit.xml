@@ -65,11 +65,26 @@
             android:textSize="12sp"
             android:layout_marginTop="14dp" />
 
-        <Button
-            android:id="@+id/in_date"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textAllCaps="false"
-            android:textSize="16sp" />
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/in_date"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1.6"
+                android:textAllCaps="false"
+                android:textSize="16sp" />
+
+            <Button
+                android:id="@+id/in_time"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textAllCaps="false"
+                android:textSize="16sp" />
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>

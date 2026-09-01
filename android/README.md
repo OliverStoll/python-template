@@ -22,8 +22,8 @@ start date; the app and the widget both show the number of days since.
 | `src/…/Settings.java` | Every widget appearance value |
 | `src/…/SettingsActivity.java` | The settings screen and its live preview |
 | `src/…/ColorPicker.java` | Swatches, opacity slider, hex field |
-| `src/…/Format.java` | Day counts to "4 months" / "128 days" |
-| `src/…/Days.java` | Calendar-day arithmetic that survives DST |
+| `src/…/Format.java` | Elapsed time to "42 minutes" / "4 months" |
+| `src/…/Days.java` | Date and time helpers for the start timestamp |
 | `build.sh` | Builds `out/Sober.apk` |
 | `verify.sh` | Checks the APK's signature, alignment and manifest |
 | `test.sh` | Plain-JVM tests for the formatting and colour logic |
@@ -52,18 +52,28 @@ name colour's alpha, so it recedes without needing a fourth setting. Row
 spacing also drives the widget's outer padding and the rows' horizontal
 padding, so a single slider tightens the whole thing.
 
-**Number format.** *Adaptive* picks the largest unit that still reads honestly:
+**Number format.** Counters store the exact moment sobriety started, not just
+the date, so the first day reads in minutes and then hours instead of sitting
+at "0 days" until midnight. *Adaptive* picks the largest unit that still reads
+honestly:
 
-| Days | Shown |
+| Elapsed | Shown |
 | --- | --- |
-| 0–6 | `5 days` |
-| 7–55 | `3 weeks` |
-| 56–364 | `4 months` |
-| 365+ | `2 years` |
+| under 1 hour | `42 minutes` |
+| under 1 day | `5 hours` |
+| 1–6 days | `5 days` |
+| 7–55 days | `3 weeks` |
+| 56–364 days | `4 months` |
+| 365 days+ | `2 years` |
 
-*Always days* keeps the raw count — `128 days` — however large it gets. Either
-way the number and the unit are separate views, so they get real spacing
-between them and can be coloured apart.
+*Days* stops converting past the first day — `128 days`, `730 days` — but still
+reads in minutes and hours before day one is up, since that is the whole point
+of keeping the start time. Either way the number and the unit are separate
+views, so they get real spacing between them and can be coloured apart.
+
+Elapsed time is measured as a duration, not in calendar days: a counter started
+at 3pm turns over at 3pm, not at midnight. That also sidesteps daylight saving
+entirely.
 
 There is no Save button — every change is written through and repaints the
 widget straight away (slider changes commit when your finger lifts). A settings
@@ -128,8 +138,14 @@ JDK 9 sealed off.)
 
 ## Notes
 
-- Day counts roll over at local midnight. The widget refreshes hourly, on
-  `ACTION_DATE_CHANGED`, and whenever you edit a counter or a setting.
+- The widget schedules its own wake-up for the moment its soonest counter
+  changes value — a minute apart in the first hour, an hour apart in the first
+  day, then daily. `updatePeriodMillis` bottoms out at 30 minutes, which is no
+  use to a counter reading in minutes; it stays configured at an hour purely as
+  a backstop. The alarm is inexact on purpose, since exact alarms need a
+  permission prompt on Android 12+ that a widget does not deserve.
+- The list in the app refreshes every 20 seconds while it is on screen, and
+  stops when it is not.
 - `Store.notifyWidgets` repaints widgets by calling `updateAppWidget` directly
   rather than broadcasting `ACTION_APPWIDGET_UPDATE` to our own receiver. Row
   contents reach the widget through the `RemoteViewsFactory`, but the frame —

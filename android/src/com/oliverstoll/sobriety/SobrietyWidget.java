@@ -1,5 +1,6 @@
 package com.oliverstoll.sobriety;
 
+import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
@@ -10,6 +11,14 @@ import android.net.Uri;
 import android.widget.RemoteViews;
 
 public class SobrietyWidget extends AppWidgetProvider {
+
+    /** Our own wake-up, fired when a displayed number is about to go stale. */
+    static final String ACTION_TICK = "com.oliverstoll.sobriety.TICK";
+
+    /** Never sleep longer than this, so a missed alarm cannot strand the widget. */
+    private static final long MAX_SLEEP = Format.HOUR;
+    /** Nor shorter than this, so a counter started seconds ago cannot spin. */
+    private static final long MIN_SLEEP = 15000L;
 
     @Override
     public void onUpdate(Context ctx, AppWidgetManager mgr, int[] appWidgetIds) {
@@ -27,16 +36,56 @@ public class SobrietyWidget extends AppWidgetProvider {
     static void renderAll(Context ctx, AppWidgetManager mgr, int[] appWidgetIds) {
         if (appWidgetIds == null) return;
         for (int id : appWidgetIds) render(ctx, mgr, id);
+        scheduleNextTick(ctx, appWidgetIds.length > 0);
+    }
+
+    @Override
+    public void onDisabled(Context ctx) {
+        super.onDisabled(ctx);
+        scheduleNextTick(ctx, false);
+    }
+
+    /**
+     * Wakes the widget exactly when its soonest counter changes value.
+     *
+     * <p>updatePeriodMillis bottoms out at 30 minutes, which is useless for a
+     * counter reading in minutes. Instead we ask each counter how long until
+     * its number moves and set one alarm for the earliest — a minute apart in
+     * the first hour, an hour apart in the first day, then daily.
+     */
+    private static void scheduleNextTick(Context ctx, boolean wanted) {
+        Context app = ctx.getApplicationContext();
+        AlarmManager alarms = (AlarmManager) app.getSystemService(Context.ALARM_SERVICE);
+        if (alarms == null) return;
+
+        Intent tick = new Intent(app, SobrietyWidget.class).setAction(ACTION_TICK);
+        PendingIntent pending = PendingIntent.getBroadcast(app, 0, tick,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        alarms.cancel(pending);
+        if (!wanted) return;
+
+        int mode = Settings.unitMode(app);
+        long soonest = MAX_SLEEP;
+        for (Tracker t : Store.load(app)) {
+            long until = Format.millisUntilChange(t.elapsed(), mode);
+            if (until < soonest) soonest = until;
+        }
+        if (soonest < MIN_SLEEP) soonest = MIN_SLEEP;
+        if (soonest > MAX_SLEEP) soonest = MAX_SLEEP;
+
+        // Inexact on purpose: this is cosmetic, and exact alarms need a
+        // permission prompt on Android 12+ that a widget does not deserve.
+        alarms.set(AlarmManager.RTC, System.currentTimeMillis() + soonest, pending);
     }
 
     @Override
     public void onReceive(Context ctx, Intent intent) {
         super.onReceive(ctx, intent);
         String action = intent.getAction();
-        if (Intent.ACTION_DATE_CHANGED.equals(action)
+        if (ACTION_TICK.equals(action)
+                || Intent.ACTION_DATE_CHANGED.equals(action)
                 || Intent.ACTION_TIME_CHANGED.equals(action)
                 || Intent.ACTION_TIMEZONE_CHANGED.equals(action)) {
-            // A new day means every counter moved on.
             Store.notifyWidgets(ctx);
         }
     }

@@ -60,12 +60,12 @@ public class WidgetService extends RemoteViewsService {
             RemoteViews row = new RemoteViews(ctx.getPackageName(), R.layout.widget_item);
             if (position < 0 || position >= items.size()) return row;
             Tracker t = items.get(position);
-            int days = t.days();
+            long elapsed = t.elapsed();
 
             row.setTextViewText(R.id.w_icon, t.icon);
             row.setTextViewText(R.id.w_name, t.name);
-            row.setTextViewText(R.id.w_days, Format.value(days, unitMode));
-            row.setTextViewText(R.id.w_unit, Format.unit(days, unitMode));
+            row.setTextViewText(R.id.w_days, Format.value(elapsed, unitMode));
+            row.setTextViewText(R.id.w_unit, Format.unit(elapsed, unitMode));
 
             row.setViewPadding(R.id.widget_item_root,
                     padHorizontalPx, padVerticalPx, padHorizontalPx, padVerticalPx);

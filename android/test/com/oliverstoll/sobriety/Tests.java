@@ -23,27 +23,51 @@ public class Tests {
         System.out.println("-- Format --");
         int adaptive = Format.MODE_ADAPTIVE;
         int daysOnly = Format.MODE_DAYS;
+        long minute = Format.MINUTE;
+        long hour = Format.HOUR;
+        long day = Format.DAY;
 
-        eq(Format.full(-1, adaptive), "—", "start date in the future");
-        eq(Format.full(0, adaptive), "0 days", "day zero");
-        eq(Format.full(1, adaptive), "1 day", "one day is singular");
-        eq(Format.full(6, adaptive), "6 days", "last day before weeks");
-        eq(Format.full(7, adaptive), "1 week", "first week is singular");
-        eq(Format.full(13, adaptive), "1 week", "13 days rounds down");
-        eq(Format.full(14, adaptive), "2 weeks", "two weeks");
-        eq(Format.full(55, adaptive), "7 weeks", "last week before months");
-        eq(Format.full(56, adaptive), "1 month", "first month is singular");
-        eq(Format.full(90, adaptive), "3 months", "three months");
-        eq(Format.full(364, adaptive), "12 months", "last month before years");
-        eq(Format.full(365, adaptive), "1 year", "first year is singular");
-        eq(Format.full(730, adaptive), "2 years", "two years");
+        eq(Format.full(-1000L, adaptive), "—", "start in the future");
 
-        eq(Format.full(128, daysOnly), "128 days", "days mode stays in days");
-        eq(Format.full(1, daysOnly), "1 day", "days mode is singular at one");
-        eq(Format.full(0, daysOnly), "0 days", "days mode at zero");
+        // The first day is the whole point of tracking elapsed time.
+        eq(Format.full(0, adaptive), "0 minutes", "the moment you start");
+        eq(Format.full(59 * 1000L, adaptive), "0 minutes", "under a minute");
+        eq(Format.full(minute, adaptive), "1 minute", "one minute is singular");
+        eq(Format.full(42 * minute, adaptive), "42 minutes", "42 minutes");
+        eq(Format.full(hour - 1, adaptive), "59 minutes", "last minute before hours");
+        eq(Format.full(hour, adaptive), "1 hour", "one hour is singular");
+        eq(Format.full(5 * hour, adaptive), "5 hours", "five hours");
+        eq(Format.full(day - 1, adaptive), "23 hours", "last hour before days");
+        eq(Format.full(day, adaptive), "1 day", "one day is singular");
 
-        eq(Format.value(128, adaptive), "4", "value half");
-        eq(Format.unit(128, adaptive), "months", "unit half");
+        eq(Format.full(6 * day, adaptive), "6 days", "last day before weeks");
+        eq(Format.full(7 * day, adaptive), "1 week", "first week is singular");
+        eq(Format.full(13 * day, adaptive), "1 week", "13 days rounds down");
+        eq(Format.full(14 * day, adaptive), "2 weeks", "two weeks");
+        eq(Format.full(55 * day, adaptive), "7 weeks", "last week before months");
+        eq(Format.full(56 * day, adaptive), "1 month", "first month is singular");
+        eq(Format.full(90 * day, adaptive), "3 months", "three months");
+        eq(Format.full(364 * day, adaptive), "12 months", "last month before years");
+        eq(Format.full(365 * day, adaptive), "1 year", "first year is singular");
+        eq(Format.full(730 * day, adaptive), "2 years", "two years");
+
+        // Days mode still reads in minutes and hours before day one is up.
+        eq(Format.full(42 * minute, daysOnly), "42 minutes", "days mode, minutes");
+        eq(Format.full(5 * hour, daysOnly), "5 hours", "days mode, hours");
+        eq(Format.full(day, daysOnly), "1 day", "days mode, one day");
+        eq(Format.full(128 * day, daysOnly), "128 days", "days mode stays in days");
+        eq(Format.full(730 * day, daysOnly), "730 days", "days mode never converts");
+
+        eq(Format.value(128 * day, adaptive), "4", "value half");
+        eq(Format.unit(128 * day, adaptive), "months", "unit half");
+
+        System.out.println("-- Refresh scheduling --");
+        eq(Format.millisUntilChange(0, adaptive), minute, "wake in a minute at the start");
+        eq(Format.millisUntilChange(90 * 1000L, adaptive), 30 * 1000L, "mid-minute remainder");
+        eq(Format.millisUntilChange(hour, adaptive), hour, "hourly once past an hour");
+        eq(Format.millisUntilChange(hour + 15 * minute, adaptive), 45 * minute, "mid-hour remainder");
+        eq(Format.millisUntilChange(day, adaptive), day, "daily once past a day");
+        eq(Format.millisUntilChange(-5000L, adaptive), 5000L, "counts down to a future start");
     }
 
     private static void colours() {
@@ -79,6 +103,7 @@ public class Tests {
     private static String render(Object value) {
         if (value == null) return "null";
         if (value instanceof Integer) return String.format("#%08X", (Integer) value);
+        if (value instanceof Long) return value + "ms";
         return value.toString();
     }
 }

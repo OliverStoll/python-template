@@ -8,7 +8,7 @@ public class Tracker {
     public String id;
     public String icon;
     public String name;
-    /** Local midnight of the start day, in millis. */
+    /** Exactly when sobriety started, in millis. */
     public long startMillis;
 
     public Tracker(String id, String icon, String name, long startMillis) {
@@ -35,7 +35,8 @@ public class Tracker {
                 o.optLong("start", System.currentTimeMillis()));
     }
 
-    public int days() {
-        return Days.between(startMillis, System.currentTimeMillis());
+    /** Milliseconds of sobriety so far; negative if the start is in the future. */
+    public long elapsed() {
+        return System.currentTimeMillis() - startMillis;
     }
 }

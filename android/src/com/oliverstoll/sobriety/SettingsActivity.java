@@ -218,12 +218,13 @@ public class SettingsActivity extends Activity {
     private void styleRow(View row, int index, int textSp, int padDp, int mode) {
         String icon = index == 0 ? "🍺" : "🚬";
         String name = index == 0 ? "Alcohol" : "Nicotine";
-        int days = index == 0 ? 128 : 41;
+        // Stand-ins show a long and a short counter, so both units are visible.
+        long elapsed = index == 0 ? 128 * Format.DAY : 5 * Format.HOUR;
         if (index < trackers.size()) {
             Tracker t = trackers.get(index);
             icon = t.icon;
             name = t.name;
-            days = t.days();
+            elapsed = t.elapsed();
         }
 
         int vPad = dp(padDp);
@@ -237,8 +238,8 @@ public class SettingsActivity extends Activity {
 
         iconView.setText(icon);
         nameView.setText(name);
-        valueView.setText(Format.value(days, mode));
-        unitView.setText(Format.unit(days, mode));
+        valueView.setText(Format.value(elapsed, mode));
+        unitView.setText(Format.unit(elapsed, mode));
 
         setSp(iconView, Settings.iconSp(textSp));
         setSp(nameView, textSp);
