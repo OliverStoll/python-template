@@ -19,12 +19,33 @@ start date; the app and the widget both show the number of days since.
 | `src/…/SobrietyWidget.java` | `AppWidgetProvider` for the home-screen widget |
 | `src/…/WidgetService.java` | `RemoteViewsFactory` backing the widget's list |
 | `src/…/Store.java` | Persistence — one JSON blob in `SharedPreferences` |
+| `src/…/Settings.java` | Widget text size and row spacing |
 | `src/…/Days.java` | Calendar-day arithmetic that survives DST |
 | `build.sh` | Builds `out/Sober.apk` |
 | `verify.sh` | Checks the APK's signature, alignment and manifest |
 
 No Gradle, no AndroidX, no third-party runtime dependencies — just the platform
 framework, so the whole APK is 28 KB.
+
+## Widget appearance
+
+The gear in the app's header opens **Widget appearance**: two sliders over a
+live preview of a widget row.
+
+| | Range | Default |
+| --- | --- | --- |
+| Text size | 8–22 sp | 13 sp |
+| Row spacing | 0–14 dp | 3 dp |
+
+Row spacing also drives the widget's outer padding (one step wider) and the
+rows' horizontal padding, so a single slider tightens the whole thing. The
+emoji sits two points above the text size.
+
+Both are applied at runtime via `RemoteViews.setTextViewTextSize` and
+`setViewPadding` rather than being baked into the layout, so saving redraws
+placed widgets immediately — no reinstall, no re-adding the widget. The values
+in the layout XML are the defaults above, which keeps the first frame correct
+before the adapter runs.
 
 ## Install
 

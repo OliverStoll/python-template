@@ -20,7 +20,7 @@ public final class Store {
 
     private Store() {}
 
-    private static SharedPreferences prefs(Context ctx) {
+    static SharedPreferences prefs(Context ctx) {
         return ctx.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
     }
 

@@ -49,7 +49,6 @@ echo "==> aapt2 link"
     --java "$BUILD/gen" \
     --min-sdk-version "$MIN_SDK" \
     --target-sdk-version "$TARGET_SDK" \
-    --version-code 1 --version-name 1.0 \
     -0 arsc \
     -o "$BUILD/base.apk" \
     "$BUILD/res.zip"

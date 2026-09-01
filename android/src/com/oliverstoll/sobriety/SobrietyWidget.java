@@ -30,6 +30,9 @@ public class SobrietyWidget extends AppWidgetProvider {
     private void render(Context ctx, AppWidgetManager mgr, int widgetId) {
         RemoteViews views = new RemoteViews(ctx.getPackageName(), R.layout.widget);
 
+        int outerPx = Settings.dpToPx(ctx, Settings.outerPaddingDp(Settings.rowPaddingDp(ctx)));
+        views.setViewPadding(R.id.widget_root, outerPx, outerPx, outerPx, outerPx);
+
         Intent data = new Intent(ctx, WidgetService.class);
         data.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId);
         // A unique data URI keeps each widget instance's adapter distinct.

@@ -6,4 +6,9 @@
     <string name="add">Add counter</string>
     <string name="empty">No counters yet.\nTap “Add counter” to start one.</string>
     <string name="widget_empty">No counters yet — open Sober to add one.</string>
+    <string name="settings_title">Widget appearance</string>
+    <string name="settings_preview">Preview</string>
+    <string name="settings_text_size">Text size: %1$d sp</string>
+    <string name="settings_row_padding">Row spacing: %1$d dp</string>
+    <string name="settings_reset">Reset</string>
 </resources>
