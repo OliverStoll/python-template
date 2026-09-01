@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Sober</string>
+    <string name="widget_label">Sobriety counters</string>
+    <string name="widget_desc">Days since you quit, at a glance.</string>
+    <string name="add">Add counter</string>
+    <string name="empty">No counters yet.\nTap “Add counter” to start one.</string>
+    <string name="widget_empty">No counters yet — open Sober to add one.</string>
+</resources>

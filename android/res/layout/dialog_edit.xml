@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingLeft="22dp"
+        android:paddingRight="22dp"
+        android:paddingTop="8dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Name"
+            android:textColor="@color/text_dim"
+            android:textSize="12sp" />
+
+        <EditText
+            android:id="@+id/in_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Alcohol, nicotine, sugar…"
+            android:singleLine="true"
+            android:textColor="@color/text"
+            android:textSize="16sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Icon"
+            android:textColor="@color/text_dim"
+            android:textSize="12sp"
+            android:layout_marginTop="14dp" />
+
+        <EditText
+            android:id="@+id/in_icon"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Any emoji"
+            android:singleLine="true"
+            android:textColor="@color/text"
+            android:textSize="20sp" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/icon_picker"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sober since"
+            android:textColor="@color/text_dim"
+            android:textSize="12sp"
+            android:layout_marginTop="14dp" />
+
+        <Button
+            android:id="@+id/in_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAllCaps="false"
+            android:textSize="16sp" />
+    </LinearLayout>
+</ScrollView>
