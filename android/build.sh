@@ -73,12 +73,24 @@ echo "==> align"
 python3 "$HERE/align.py" "$BUILD/unsigned.apk" "$BUILD/aligned.apk"
 
 echo "==> sign"
-KEYSTORE="$HERE/debug.p12"
+# Android refuses to update an installed app whose signature differs, so every
+# build that is meant to upgrade an earlier one must reuse the same keystore.
+# CI passes the shared key in through SOBER_KEYSTORE; a local build falls back
+# to a throwaway key it generates once.
+KEYSTORE="${SOBER_KEYSTORE:-$HERE/debug.p12}"
+KEYSTORE_PASSWORD="${SOBER_KEYSTORE_PASSWORD:-android}"
+KEYSTORE_ALIAS="${SOBER_KEYSTORE_ALIAS:-sober}"
+
 if [ ! -f "$KEYSTORE" ]; then
+    if [ -n "${SOBER_KEYSTORE:-}" ]; then
+        echo "SOBER_KEYSTORE is set but $KEYSTORE does not exist" >&2
+        exit 1
+    fi
+    echo "    generating a local signing key at $KEYSTORE"
     keytool -genkeypair -v -storetype PKCS12 -keystore "$KEYSTORE" \
-        -alias sober -keyalg RSA -keysize 2048 -validity 10950 \
-        -storepass android -keypass android \
-        -dname "CN=Sober Debug, OU=Dev, O=Sober, L=Berlin, C=DE" >/dev/null
+        -alias "$KEYSTORE_ALIAS" -keyalg RSA -keysize 2048 -validity 10950 \
+        -storepass "$KEYSTORE_PASSWORD" -keypass "$KEYSTORE_PASSWORD" \
+        -dname "CN=Sober, OU=Dev, O=Sober, L=Berlin, C=DE" >/dev/null
 fi
 javac -nowarn -cp "$APKSIG_JAR" -d "$BUILD/tools" "$HERE/tools/Signer.java"
 # apksig 2.3.0 reaches into sun.security.x509, sealed off since JDK 9.
@@ -86,7 +98,10 @@ java --add-exports java.base/sun.security.x509=ALL-UNNAMED \
     --add-exports java.base/sun.security.pkcs=ALL-UNNAMED \
     --add-exports java.base/sun.security.util=ALL-UNNAMED \
     -cp "$APKSIG_JAR:$BUILD/tools" Signer \
-    "$BUILD/aligned.apk" "$OUT/Sober.apk" "$KEYSTORE" android sober "$MIN_SDK"
+    "$BUILD/aligned.apk" "$OUT/Sober.apk" \
+    "$KEYSTORE" "$KEYSTORE_PASSWORD" "$KEYSTORE_ALIAS" "$MIN_SDK"
 
 echo
-echo "APK: $OUT/Sober.apk  ($(du -h "$OUT/Sober.apk" | cut -f1))"
+VERSION_NAME="$(sed -n 's/.*android:versionName="\([^"]*\)".*/\1/p' "$HERE/AndroidManifest.xml" | head -1)"
+VERSION_CODE="$(sed -n 's/.*android:versionCode="\([^"]*\)".*/\1/p' "$HERE/AndroidManifest.xml" | head -1)"
+echo "APK: $OUT/Sober.apk  (v$VERSION_NAME, code $VERSION_CODE, $(du -h "$OUT/Sober.apk" | cut -f1))"

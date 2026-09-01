@@ -103,6 +103,53 @@ The widget is resizable; tapping any row opens the app.
 
 Requires Android 7.0 (API 24) or newer.
 
+## Staying up to date
+
+Sideloaded apps get no updates on their own. Two ways to stop re-downloading by
+hand, in order of least work:
+
+**Obtainium** (recommended). Install [Obtainium][obtainium], add this repo's
+URL, and it watches GitHub Releases and offers each new build. Grant it
+"install unknown apps" once and updating is a single tap.
+
+**F-Droid with a self-hosted repo.** More setup, but F-Droid can check on a
+schedule and, on a rooted device with the Privileged Extension, install
+silently.
+
+Either way the updates come from GitHub Releases, which
+`.github/workflows/android-release.yml` publishes. Tag a commit to cut one:
+
+```
+# bump android:versionCode and android:versionName in AndroidManifest.xml first
+git tag v1.6 && git push origin v1.6
+```
+
+The workflow refuses to run if the tag and `versionName` disagree, so a
+forgotten bump fails loudly instead of shipping an APK that cannot install over
+the last one.
+
+### The signing key must not change
+
+Android refuses to install an update whose signature differs from the installed
+app, so every release has to be signed with the same key. The workflow reads it
+from two repository secrets:
+
+| Secret | |
+| --- | --- |
+| `SOBER_KEYSTORE_BASE64` | `base64 -w0 android/debug.p12` |
+| `SOBER_KEYSTORE_PASSWORD` | the keystore password (`android` by default) |
+
+`build.sh` picks the key up from `SOBER_KEYSTORE` / `SOBER_KEYSTORE_PASSWORD` /
+`SOBER_KEYSTORE_ALIAS` when they are set, and otherwise generates a local
+throwaway key at `android/debug.p12`. **Back that file up.** It is git-ignored,
+and losing it means every later build is a different app as far as Android is
+concerned — the only way back is to uninstall and lose your counters.
+
+`verify.sh` prints the signer's SHA-256, which is how you confirm two APKs will
+update each other.
+
+[obtainium]: https://github.com/ImranR98/Obtainium
+
 ## Build
 
 ```
