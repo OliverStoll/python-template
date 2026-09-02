@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AppTheme" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:colorBackground">@color/bg</item>
+        <item name="android:windowBackground">@color/bg</item>
+        <item name="android:colorAccent">@color/accent</item>
+        <item name="android:textColorPrimary">@color/text</item>
+        <item name="android:textColorSecondary">@color/text_dim</item>
+        <item name="android:statusBarColor">@color/bg</item>
+        <item name="android:alertDialogTheme">@style/SoberDialog</item>
+        <item name="android:datePickerDialogTheme">@style/SoberDialog</item>
+        <item name="android:timePickerDialogTheme">@style/SoberDialog</item>
+    </style>
+
+    <!-- Dialogs in the app's own colours instead of stock Material grey. -->
+    <style name="SoberDialog" parent="@android:style/Theme.Material.Dialog.Alert">
+        <item name="android:windowBackground">@drawable/dialog_bg</item>
+        <item name="android:colorBackground">@color/card</item>
+        <item name="android:colorAccent">@color/accent</item>
+        <item name="android:textColorPrimary">@color/text</item>
+        <item name="android:textColorSecondary">@color/text_dim</item>
+        <item name="android:windowTitleStyle">@style/SoberDialogTitle</item>
+    </style>
+
+    <!--
+        The same card, with nothing behind it. A dialog opened from the widget
+        floats over the home screen, and dimming the wallpaper for a one-tap
+        confirmation reads as the whole screen changing rather than a prompt
+        appearing. In the app the dim stays, where it separates the prompt from
+        the list underneath.
+    -->
+    <style name="SoberDialogNoDim" parent="@style/SoberDialog">
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:windowIsTranslucent">true</item>
+    </style>
+
+    <style name="SoberDialogTitle" parent="@android:style/TextAppearance.Material.DialogWindowTitle">
+        <item name="android:textColor">@color/text</item>
+        <item name="android:textSize">19sp</item>
+    </style>
+
+    <!--
+        The host for a widget tap. The activity itself must be invisible and
+        must not animate: it exists only to own the dialog, and the default
+        activity open animation made the dialog slide up from the navigation
+        bar. windowDisablePreview removes the themed placeholder window that
+        was flashing as a grey pane with a status bar above it.
+    -->
+    <style name="InvisibleHost" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:alertDialogTheme">@style/SoberDialogNoDim</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:windowDisablePreview">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">false</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+    <style name="SectionLabel">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/text_dim</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+</resources>

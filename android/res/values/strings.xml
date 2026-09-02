@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Sober</string>
+    <string name="widget_label">Sobriety counters</string>
+    <string name="widget_desc">Days since you quit, at a glance.</string>
+    <string name="add">Add counter</string>
+    <string name="empty">No counters yet.\nTap “Add counter” to start one.</string>
+    <string name="widget_empty">No counters yet — open Sober to add one.</string>
+    <string name="settings_title">Widget appearance</string>
+    <string name="settings_preview">Preview</string>
+    <string name="settings_text_size">Name and number size: %1$d sp</string>
+    <string name="settings_unit_size">Unit size: %1$d sp</string>
+    <string name="settings_padding_v">Vertical spacing: %1$d dp</string>
+    <string name="settings_padding_h">Horizontal spacing: %1$d dp</string>
+    <string name="settings_reset">Reset</string>
+    <string name="settings_save">Done</string>
+    <string name="settings_colors">Colours</string>
+    <string name="settings_live">Changes apply to the widget straight away.</string>
+    <string name="settings_color_bg">Background</string>
+    <string name="settings_color_text">Name text</string>
+    <string name="settings_color_value">Number</string>
+    <string name="settings_format">Number format</string>
+    <string name="settings_format_adaptive">Adaptive — minutes, days, weeks, months, years</string>
+    <string name="settings_format_days">Days — minutes, then 0.1–0.9, on the first day</string>
+    <string name="reset">Reset</string>
+    <string name="reset_hint">Reset this counter</string>
+    <string name="history_none">No slips recorded — this is the first streak.</string>
+    <string name="history_some">Slips (%1$d) — tap ✕ to undo one and restore the streak</string>
+</resources>

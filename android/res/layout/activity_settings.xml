@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg"
+    android:fitsSystemWindows="true">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/settings_title"
+        android:textColor="@color/text"
+        android:textSize="26sp"
+        android:textStyle="bold"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="10dp" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:clipToPadding="false">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                style="@style/SectionLabel"
+                android:text="@string/settings_live"
+                android:layout_marginBottom="10dp" />
+
+            <TextView
+                style="@style/SectionLabel"
+                android:text="@string/settings_preview" />
+
+            <!-- Mirrors the widget's own structure so it previews faithfully. -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp">
+
+                <ImageView
+                    android:id="@+id/preview_bg"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="fitXY"
+                    android:src="@drawable/widget_bg_shape"
+                    android:contentDescription="@null" />
+
+                <LinearLayout
+                    android:id="@+id/preview_content"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="6dp">
+
+                    <include
+                        android:id="@+id/preview_row_one"
+                        layout="@layout/widget_item" />
+
+                    <include
+                        android:id="@+id/preview_row_two"
+                        layout="@layout/widget_item" />
+                </LinearLayout>
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/label_text_size"
+                style="@style/SectionLabel"
+                android:layout_marginTop="20dp" />
+
+            <SeekBar
+                android:id="@+id/seek_text_size"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:id="@+id/label_unit_size"
+                style="@style/SectionLabel"
+                android:layout_marginTop="8dp" />
+
+            <SeekBar
+                android:id="@+id/seek_unit_size"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:id="@+id/label_padding_v"
+                style="@style/SectionLabel"
+                android:layout_marginTop="8dp" />
+
+            <SeekBar
+                android:id="@+id/seek_padding_v"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:id="@+id/label_padding_h"
+                style="@style/SectionLabel"
+                android:layout_marginTop="8dp" />
+
+            <SeekBar
+                android:id="@+id/seek_padding_h"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                style="@style/SectionLabel"
+                android:text="@string/settings_colors"
+                android:layout_marginTop="20dp" />
+
+            <LinearLayout
+                android:id="@+id/color_rows"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="4dp" />
+
+            <TextView
+                style="@style/SectionLabel"
+                android:text="@string/settings_format"
+                android:layout_marginTop="20dp" />
+
+            <RadioGroup
+                android:id="@+id/format_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="4dp">
+
+                <RadioButton
+                    android:id="@+id/format_adaptive"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_format_adaptive"
+                    android:textColor="@color/text"
+                    android:textSize="15sp" />
+
+                <RadioButton
+                    android:id="@+id/format_days"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_format_days"
+                    android:textColor="@color/text"
+                    android:textSize="15sp" />
+            </RadioGroup>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="20dp" />
+        </LinearLayout>
+    </ScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="20dp">
+
+        <Button
+            android:id="@+id/reset"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_weight="1"
+            android:layout_marginRight="10dp"
+            android:background="@drawable/button_outline"
+            android:text="@string/settings_reset"
+            android:textAllCaps="false"
+            android:textColor="@color/text_dim"
+            android:textSize="16sp" />
+
+        <Button
+            android:id="@+id/save"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_weight="1"
+            android:background="@drawable/button_bg"
+            android:text="@string/settings_save"
+            android:textAllCaps="false"
+            android:textStyle="bold"
+            android:textColor="#FF08120B"
+            android:textSize="16sp" />
+    </LinearLayout>
+</LinearLayout>
