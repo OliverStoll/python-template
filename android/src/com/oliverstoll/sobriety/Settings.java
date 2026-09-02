@@ -46,6 +46,10 @@ public final class Settings {
     private static final String KEY_TEXT_COLOR = "widget_text_color";
     private static final String KEY_VALUE_COLOR = "widget_value_color";
     private static final String KEY_UNIT_MODE = "widget_unit_mode";
+    private static final String KEY_SCHEMA = "settings_schema";
+
+    /** Bumped when stored settings need repairing on upgrade. */
+    private static final int SCHEMA = 2;
 
     private Settings() {}
 
@@ -86,6 +90,7 @@ public final class Settings {
 
     public static Values load(Context ctx) {
         SharedPreferences p = prefs(ctx);
+        if (p.getInt(KEY_SCHEMA, 1) < SCHEMA) repair(p);
         Values v = new Values();
         v.textSp = clamp(p.getInt(KEY_TEXT_SP, DEFAULT_TEXT_SP), MIN_TEXT_SP, MAX_TEXT_SP);
         v.unitSp = clamp(p.getInt(KEY_UNIT_SP, DEFAULT_UNIT_SP), MIN_UNIT_SP, MAX_UNIT_SP);
@@ -101,6 +106,22 @@ public final class Settings {
         return v;
     }
 
+    /**
+     * 1.9 shipped a settings screen that reset the unit size and both spacings
+     * to their minimums every time it opened, and wrote that back. A wiped
+     * value is indistinguishable from a chosen one, so put those three back to
+     * their defaults once. Colours, text size and the reading mode were never
+     * touched by that bug and are left alone.
+     */
+    private static void repair(SharedPreferences p) {
+        p.edit()
+                .remove(KEY_UNIT_SP)
+                .remove(KEY_PADDING_V_DP)
+                .remove(KEY_PADDING_H_DP)
+                .putInt(KEY_SCHEMA, SCHEMA)
+                .apply();
+    }
+
     public static void save(Context ctx, Values v) {
         prefs(ctx).edit()
                 .putInt(KEY_TEXT_SP, clamp(v.textSp, MIN_TEXT_SP, MAX_TEXT_SP))
@@ -114,6 +135,7 @@ public final class Settings {
                 .putInt(KEY_VALUE_COLOR, v.valueColor)
                 .putInt(KEY_UNIT_MODE,
                         v.unitMode == Format.MODE_DAYS ? Format.MODE_DAYS : Format.MODE_ADAPTIVE)
+                .putInt(KEY_SCHEMA, SCHEMA)
                 .apply();
         Store.notifyWidgets(ctx);
     }

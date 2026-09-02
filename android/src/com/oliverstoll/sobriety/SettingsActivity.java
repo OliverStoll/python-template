@@ -26,6 +26,16 @@ public class SettingsActivity extends Activity {
     /** Working copy of everything the form edits. */
     private final Settings.Values look = new Settings.Values();
 
+    /**
+     * True while the controls are being written from {@link #look}.
+     *
+     * <p>Without it, setting one slider fires its listener, which reads back
+     * every slider — including the ones not yet filled in — and overwrites the
+     * working copy with their defaults. Loading the screen then silently reset
+     * most of the settings and saved the wreckage.
+     */
+    private boolean binding;
+
     private SeekBar textSeek;
     private SeekBar unitSeek;
     private SeekBar padVSeek;
@@ -74,11 +84,15 @@ public class SettingsActivity extends Activity {
 
         SeekBar.OnSeekBarChangeListener live = new SeekBar.OnSeekBarChangeListener() {
             @Override public void onProgressChanged(SeekBar bar, int value, boolean fromUser) {
+                if (binding) return;
+                readForm();
                 refreshPreview();
             }
             @Override public void onStartTrackingTouch(SeekBar bar) {}
             @Override public void onStopTrackingTouch(SeekBar bar) {
+                if (binding) return;
                 // Commit once the finger lifts, not on every pixel of the drag.
+                readForm();
                 applyNow();
             }
         };
@@ -89,6 +103,8 @@ public class SettingsActivity extends Activity {
 
         formatGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(RadioGroup group, int checkedId) {
+                if (binding) return;
+                readForm();
                 refreshPreview();
                 applyNow();
             }
@@ -115,14 +131,28 @@ public class SettingsActivity extends Activity {
         refreshPreview();
     }
 
-    /** Push the working copy into the controls. */
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // Sliders commit on finger-up; this catches anything that changed by
+        // another route, so leaving the screen can never lose a setting.
+        readForm();
+        applyNow();
+    }
+
+    /** Push the working copy into the controls, without the listeners firing. */
     private void fillForm() {
-        textSeek.setProgress(look.textSp - Settings.MIN_TEXT_SP);
-        unitSeek.setProgress(look.unitSp - Settings.MIN_UNIT_SP);
-        padVSeek.setProgress(look.paddingVerticalDp - Settings.MIN_PADDING_DP);
-        padHSeek.setProgress(look.paddingHorizontalDp - Settings.MIN_PADDING_DP);
-        formatGroup.check(look.unitMode == Format.MODE_DAYS
-                ? R.id.format_days : R.id.format_adaptive);
+        binding = true;
+        try {
+            textSeek.setProgress(look.textSp - Settings.MIN_TEXT_SP);
+            unitSeek.setProgress(look.unitSp - Settings.MIN_UNIT_SP);
+            padVSeek.setProgress(look.paddingVerticalDp - Settings.MIN_PADDING_DP);
+            padHSeek.setProgress(look.paddingHorizontalDp - Settings.MIN_PADDING_DP);
+            formatGroup.check(look.unitMode == Format.MODE_DAYS
+                    ? R.id.format_days : R.id.format_adaptive);
+        } finally {
+            binding = false;
+        }
     }
 
     /** Pull the controls into the working copy. */
@@ -154,7 +184,6 @@ public class SettingsActivity extends Activity {
      * of the preview is that what you see is already what the widget shows.
      */
     private void applyNow() {
-        readForm();
         Settings.save(this, look);
     }
 
@@ -214,8 +243,8 @@ public class SettingsActivity extends Activity {
         else look.valueColor = color;
     }
 
+    /** Renders the working copy. Never writes to it — the listeners do that. */
     private void refreshPreview() {
-        readForm();
         int mode = look.unitMode;
 
         textLabel.setText(getString(R.string.settings_text_size, look.textSp));
