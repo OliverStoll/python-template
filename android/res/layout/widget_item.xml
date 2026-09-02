@@ -5,6 +5,7 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
+    android:baselineAligned="true"
     android:paddingTop="3dp"
     android:paddingBottom="3dp"
     android:paddingLeft="4dp"
@@ -29,24 +30,38 @@
         android:singleLine="true"
         android:ellipsize="end" />
 
-    <TextView
-        android:id="@+id/w_days"
+    <!--
+        The number and its unit sit in their own row so they share a baseline.
+        LinearLayout groups baseline alignment by vertical gravity, so in the
+        outer row — which is centre_vertical — two children of different text
+        sizes get centred against each other instead of sitting on one line.
+        This wrapper leaves gravity at its default, where baseline alignment is
+        unambiguous, and is itself centred in the row as one block.
+    -->
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="4dp"
-        android:gravity="end"
-        android:textColor="@color/text"
-        android:textSize="13sp"
-        android:textStyle="bold" />
+        android:orientation="horizontal"
+        android:baselineAligned="true"
+        android:layout_marginLeft="4dp">
 
-    <!-- Split from the number so the two can be spaced and coloured apart. -->
-    <TextView
-        android:id="@+id/w_unit"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="2dp"
-        android:gravity="start"
-        android:textColor="@color/text_dim"
-        android:textSize="11sp"
-        android:includeFontPadding="false" />
+        <TextView
+            android:id="@+id/w_days"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:textColor="@color/text"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <!-- Split from the number so the two can be spaced and coloured apart. -->
+        <TextView
+            android:id="@+id/w_unit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="2dp"
+            android:gravity="start"
+            android:textColor="@color/text_dim"
+            android:textSize="11sp" />
+    </LinearLayout>
 </LinearLayout>
