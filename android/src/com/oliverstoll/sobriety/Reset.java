@@ -3,7 +3,6 @@ package com.oliverstoll.sobriety;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.view.ContextThemeWrapper;
 
 import java.util.List;
 
@@ -22,10 +21,10 @@ public final class Reset {
      * entry points are a single tap on a small target.
      */
     public static void confirm(Context ctx, final Tracker tracker, final OnDone done) {
-        // The app's own dialog theme, named explicitly so the prompt looks the
-        // same from the list and from the invisible activity a widget tap opens.
-        Context themed = new ContextThemeWrapper(ctx, R.style.SoberDialog);
-        new AlertDialog.Builder(themed)
+        // No explicit theme: the builder resolves alertDialogTheme from the
+        // host, so the app gets the dimmed card and the widget's invisible
+        // activity gets the same card with nothing behind it.
+        new AlertDialog.Builder(ctx)
                 .setTitle("Reset " + tracker.name + "?")
                 .setMessage("This records a slip right now and starts the count again from"
                         + " this moment.\n\nThe current streak began "

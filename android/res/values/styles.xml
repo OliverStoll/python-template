@@ -22,6 +22,18 @@
         <item name="android:windowTitleStyle">@style/SoberDialogTitle</item>
     </style>
 
+    <!--
+        The same card, with nothing behind it. A dialog opened from the widget
+        floats over the home screen, and dimming the wallpaper for a one-tap
+        confirmation reads as the whole screen changing rather than a prompt
+        appearing. In the app the dim stays, where it separates the prompt from
+        the list underneath.
+    -->
+    <style name="SoberDialogNoDim" parent="@style/SoberDialog">
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:windowIsTranslucent">true</item>
+    </style>
+
     <style name="SoberDialogTitle" parent="@android:style/TextAppearance.Material.DialogWindowTitle">
         <item name="android:textColor">@color/text</item>
         <item name="android:textSize">19sp</item>
@@ -35,7 +47,7 @@
         was flashing as a grey pane with a status bar above it.
     -->
     <style name="InvisibleHost" parent="@android:style/Theme.Material.NoActionBar">
-        <item name="android:alertDialogTheme">@style/SoberDialog</item>
+        <item name="android:alertDialogTheme">@style/SoberDialogNoDim</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowContentOverlay">@null</item>
