@@ -22,9 +22,9 @@ public final class Reset {
      * entry points are a single tap on a small target.
      */
     public static void confirm(Context ctx, final Tracker tracker, final OnDone done) {
-        // An explicit theme so the dialog looks the same from the app and from
-        // the translucent activity the widget taps into.
-        Context themed = new ContextThemeWrapper(ctx, android.R.style.Theme_Material_Dialog_Alert);
+        // The app's own dialog theme, named explicitly so the prompt looks the
+        // same from the list and from the invisible activity a widget tap opens.
+        Context themed = new ContextThemeWrapper(ctx, R.style.SoberDialog);
         new AlertDialog.Builder(themed)
                 .setTitle("Reset " + tracker.name + "?")
                 .setMessage("This records a slip right now and starts the count again from"

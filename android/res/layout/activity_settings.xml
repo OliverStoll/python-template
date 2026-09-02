@@ -82,12 +82,32 @@
                 android:layout_height="wrap_content" />
 
             <TextView
-                android:id="@+id/label_row_padding"
+                android:id="@+id/label_unit_size"
                 style="@style/SectionLabel"
                 android:layout_marginTop="8dp" />
 
             <SeekBar
-                android:id="@+id/seek_row_padding"
+                android:id="@+id/seek_unit_size"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:id="@+id/label_padding_v"
+                style="@style/SectionLabel"
+                android:layout_marginTop="8dp" />
+
+            <SeekBar
+                android:id="@+id/seek_padding_v"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:id="@+id/label_padding_h"
+                style="@style/SectionLabel"
+                android:layout_marginTop="8dp" />
+
+            <SeekBar
+                android:id="@+id/seek_padding_h"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
 

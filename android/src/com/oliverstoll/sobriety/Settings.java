@@ -7,24 +7,30 @@ import android.graphics.Color;
 /**
  * Everything about how the widget draws itself.
  *
- * <p>All of it is applied at runtime through {@code RemoteViews} — text sizes
- * and padding via {@code setTextViewTextSize} / {@code setViewPadding}, colours
- * via {@code setTextColor} and a tinted background image — rather than being
- * baked into the layout XML. Saving therefore redraws placed widgets with no
- * reinstall. The layout XML carries the same defaults, which keeps the first
- * frame correct before the adapter runs.
+ * <p>All of it is applied at runtime through {@code RemoteViews} — sizes and
+ * padding via {@code setTextViewTextSize}, {@code setViewPadding} and
+ * {@code setMinWidth}, colours via {@code setTextColor} and a tinted background
+ * image — rather than being baked into the layout XML. Saving therefore redraws
+ * placed widgets with no reinstall. The layout XML carries the same defaults,
+ * which keeps the first frame correct before the adapter runs.
  */
 public final class Settings {
 
-    /** Base text size for a widget row's name and count, in sp. */
+    /** Size of a row's name and count, in sp. */
     public static final int DEFAULT_TEXT_SP = 13;
     public static final int MIN_TEXT_SP = 8;
     public static final int MAX_TEXT_SP = 22;
 
-    /** Vertical padding inside a widget row, in dp. */
-    public static final int DEFAULT_ROW_PADDING_DP = 3;
-    public static final int MIN_ROW_PADDING_DP = 0;
-    public static final int MAX_ROW_PADDING_DP = 14;
+    /** Size of the unit word beside the count, in sp. */
+    public static final int DEFAULT_UNIT_SP = 11;
+    public static final int MIN_UNIT_SP = 6;
+    public static final int MAX_UNIT_SP = 20;
+
+    /** Padding inside a row, in dp. Vertical sets row pitch, horizontal insets it. */
+    public static final int DEFAULT_PADDING_V_DP = 3;
+    public static final int DEFAULT_PADDING_H_DP = 4;
+    public static final int MIN_PADDING_DP = 0;
+    public static final int MAX_PADDING_DP = 14;
 
     public static final int DEFAULT_BG_COLOR = 0xE610151C;
     public static final int DEFAULT_TEXT_COLOR = 0xFFF2F5F8;
@@ -33,7 +39,9 @@ public final class Settings {
     public static final int DEFAULT_UNIT_MODE = Format.MODE_ADAPTIVE;
 
     private static final String KEY_TEXT_SP = "widget_text_sp";
-    private static final String KEY_ROW_PADDING_DP = "widget_row_padding_dp";
+    private static final String KEY_UNIT_SP = "widget_unit_sp";
+    private static final String KEY_PADDING_V_DP = "widget_row_padding_dp";
+    private static final String KEY_PADDING_H_DP = "widget_row_padding_h_dp";
     private static final String KEY_BG_COLOR = "widget_bg_color";
     private static final String KEY_TEXT_COLOR = "widget_text_color";
     private static final String KEY_VALUE_COLOR = "widget_value_color";
@@ -41,79 +49,78 @@ public final class Settings {
 
     private Settings() {}
 
+    /** One snapshot of every setting, so nothing is read twice mid-render. */
+    public static class Values {
+        public int textSp = DEFAULT_TEXT_SP;
+        public int unitSp = DEFAULT_UNIT_SP;
+        public int paddingVerticalDp = DEFAULT_PADDING_V_DP;
+        public int paddingHorizontalDp = DEFAULT_PADDING_H_DP;
+        public int bgColor = DEFAULT_BG_COLOR;
+        public int textColor = DEFAULT_TEXT_COLOR;
+        public int valueColor = DEFAULT_VALUE_COLOR;
+        public int unitMode = DEFAULT_UNIT_MODE;
+
+        /** The unit word sits at the same colour as the name, just softer. */
+        public int unitColor() {
+            return withAlpha(textColor, Math.round(Color.alpha(textColor) * 0.65f));
+        }
+
+        /** The emoji reads small next to the text, so give it a couple of points. */
+        public float iconSp() {
+            return textSp + 2f;
+        }
+
+        /** The widget's outer margin, a step wider than the rows sit. */
+        public int outerPaddingVerticalDp() {
+            return paddingVerticalDp + 3;
+        }
+
+        public int outerPaddingHorizontalDp() {
+            return paddingHorizontalDp + 2;
+        }
+    }
+
     private static SharedPreferences prefs(Context ctx) {
         return Store.prefs(ctx);
     }
 
-    public static int textSp(Context ctx) {
-        return clamp(prefs(ctx).getInt(KEY_TEXT_SP, DEFAULT_TEXT_SP), MIN_TEXT_SP, MAX_TEXT_SP);
+    public static Values load(Context ctx) {
+        SharedPreferences p = prefs(ctx);
+        Values v = new Values();
+        v.textSp = clamp(p.getInt(KEY_TEXT_SP, DEFAULT_TEXT_SP), MIN_TEXT_SP, MAX_TEXT_SP);
+        v.unitSp = clamp(p.getInt(KEY_UNIT_SP, DEFAULT_UNIT_SP), MIN_UNIT_SP, MAX_UNIT_SP);
+        v.paddingVerticalDp = clamp(p.getInt(KEY_PADDING_V_DP, DEFAULT_PADDING_V_DP),
+                MIN_PADDING_DP, MAX_PADDING_DP);
+        v.paddingHorizontalDp = clamp(p.getInt(KEY_PADDING_H_DP, DEFAULT_PADDING_H_DP),
+                MIN_PADDING_DP, MAX_PADDING_DP);
+        v.bgColor = p.getInt(KEY_BG_COLOR, DEFAULT_BG_COLOR);
+        v.textColor = p.getInt(KEY_TEXT_COLOR, DEFAULT_TEXT_COLOR);
+        v.valueColor = p.getInt(KEY_VALUE_COLOR, DEFAULT_VALUE_COLOR);
+        v.unitMode = p.getInt(KEY_UNIT_MODE, DEFAULT_UNIT_MODE) == Format.MODE_DAYS
+                ? Format.MODE_DAYS : Format.MODE_ADAPTIVE;
+        return v;
     }
 
-    public static int rowPaddingDp(Context ctx) {
-        return clamp(prefs(ctx).getInt(KEY_ROW_PADDING_DP, DEFAULT_ROW_PADDING_DP),
-                MIN_ROW_PADDING_DP, MAX_ROW_PADDING_DP);
-    }
-
-    public static int bgColor(Context ctx) {
-        return prefs(ctx).getInt(KEY_BG_COLOR, DEFAULT_BG_COLOR);
-    }
-
-    public static int textColor(Context ctx) {
-        return prefs(ctx).getInt(KEY_TEXT_COLOR, DEFAULT_TEXT_COLOR);
-    }
-
-    public static int valueColor(Context ctx) {
-        return prefs(ctx).getInt(KEY_VALUE_COLOR, DEFAULT_VALUE_COLOR);
-    }
-
-    public static int unitMode(Context ctx) {
-        int mode = prefs(ctx).getInt(KEY_UNIT_MODE, DEFAULT_UNIT_MODE);
-        return mode == Format.MODE_DAYS ? Format.MODE_DAYS : Format.MODE_ADAPTIVE;
-    }
-
-    public static void save(Context ctx, int textSp, int rowPaddingDp,
-                            int bgColor, int textColor, int valueColor, int unitMode) {
+    public static void save(Context ctx, Values v) {
         prefs(ctx).edit()
-                .putInt(KEY_TEXT_SP, clamp(textSp, MIN_TEXT_SP, MAX_TEXT_SP))
-                .putInt(KEY_ROW_PADDING_DP,
-                        clamp(rowPaddingDp, MIN_ROW_PADDING_DP, MAX_ROW_PADDING_DP))
-                .putInt(KEY_BG_COLOR, bgColor)
-                .putInt(KEY_TEXT_COLOR, textColor)
-                .putInt(KEY_VALUE_COLOR, valueColor)
-                .putInt(KEY_UNIT_MODE, unitMode == Format.MODE_DAYS
-                        ? Format.MODE_DAYS : Format.MODE_ADAPTIVE)
+                .putInt(KEY_TEXT_SP, clamp(v.textSp, MIN_TEXT_SP, MAX_TEXT_SP))
+                .putInt(KEY_UNIT_SP, clamp(v.unitSp, MIN_UNIT_SP, MAX_UNIT_SP))
+                .putInt(KEY_PADDING_V_DP,
+                        clamp(v.paddingVerticalDp, MIN_PADDING_DP, MAX_PADDING_DP))
+                .putInt(KEY_PADDING_H_DP,
+                        clamp(v.paddingHorizontalDp, MIN_PADDING_DP, MAX_PADDING_DP))
+                .putInt(KEY_BG_COLOR, v.bgColor)
+                .putInt(KEY_TEXT_COLOR, v.textColor)
+                .putInt(KEY_VALUE_COLOR, v.valueColor)
+                .putInt(KEY_UNIT_MODE,
+                        v.unitMode == Format.MODE_DAYS ? Format.MODE_DAYS : Format.MODE_ADAPTIVE)
                 .apply();
         Store.notifyWidgets(ctx);
     }
 
-    public static void reset(Context ctx) {
-        save(ctx, DEFAULT_TEXT_SP, DEFAULT_ROW_PADDING_DP, DEFAULT_BG_COLOR,
-                DEFAULT_TEXT_COLOR, DEFAULT_VALUE_COLOR, DEFAULT_UNIT_MODE);
-    }
-
-    /** The emoji reads small next to the text, so give it a couple of points. */
-    public static float iconSp(int textSp) {
-        return textSp + 2f;
-    }
-
-    /** The unit word sits a shade below the number it follows. */
-    public static float unitSp(int textSp) {
-        return Math.max(MIN_TEXT_SP - 2f, textSp - 2f);
-    }
-
-    /** Horizontal row padding tracks the vertical setting, one step wider. */
-    public static int rowPaddingHorizontalDp(int rowPaddingDp) {
-        return rowPaddingDp + 1;
-    }
-
-    /** The widget's outer margin, so one slider tightens the whole thing. */
-    public static int outerPaddingDp(int rowPaddingDp) {
-        return rowPaddingDp + 3;
-    }
-
-    /** The unit word is the same colour as the name, just softer. */
-    public static int unitColor(int textColor) {
-        return withAlpha(textColor, Math.round(Color.alpha(textColor) * 0.65f));
+    /** Only the reading mode, for the places that need nothing else. */
+    public static int unitMode(Context ctx) {
+        return load(ctx).unitMode;
     }
 
     public static int withAlpha(int color, int alpha) {

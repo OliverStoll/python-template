@@ -23,13 +23,17 @@ public class SettingsActivity extends Activity {
     private static final int TEXT = 1;
     private static final int VALUE = 2;
 
-    /** Working copy; only written back to storage on Save. */
-    private final int[] colors = new int[3];
+    /** Working copy of everything the form edits. */
+    private final Settings.Values look = new Settings.Values();
 
     private SeekBar textSeek;
-    private SeekBar padSeek;
+    private SeekBar unitSeek;
+    private SeekBar padVSeek;
+    private SeekBar padHSeek;
     private TextView textLabel;
-    private TextView padLabel;
+    private TextView unitLabel;
+    private TextView padVLabel;
+    private TextView padHLabel;
     private RadioGroup formatGroup;
     private ImageView previewBg;
     private View previewContent;
@@ -51,19 +55,22 @@ public class SettingsActivity extends Activity {
         rowOne = findViewById(R.id.preview_row_one);
         rowTwo = findViewById(R.id.preview_row_two);
         textLabel = (TextView) findViewById(R.id.label_text_size);
-        padLabel = (TextView) findViewById(R.id.label_row_padding);
+        unitLabel = (TextView) findViewById(R.id.label_unit_size);
+        padVLabel = (TextView) findViewById(R.id.label_padding_v);
+        padHLabel = (TextView) findViewById(R.id.label_padding_h);
         textSeek = (SeekBar) findViewById(R.id.seek_text_size);
-        padSeek = (SeekBar) findViewById(R.id.seek_row_padding);
+        unitSeek = (SeekBar) findViewById(R.id.seek_unit_size);
+        padVSeek = (SeekBar) findViewById(R.id.seek_padding_v);
+        padHSeek = (SeekBar) findViewById(R.id.seek_padding_h);
         formatGroup = (RadioGroup) findViewById(R.id.format_group);
 
-        colors[BACKGROUND] = Settings.bgColor(this);
-        colors[TEXT] = Settings.textColor(this);
-        colors[VALUE] = Settings.valueColor(this);
-
+        copyInto(look, Settings.load(this));
         buildColorRows();
 
         textSeek.setMax(Settings.MAX_TEXT_SP - Settings.MIN_TEXT_SP);
-        padSeek.setMax(Settings.MAX_ROW_PADDING_DP - Settings.MIN_ROW_PADDING_DP);
+        unitSeek.setMax(Settings.MAX_UNIT_SP - Settings.MIN_UNIT_SP);
+        padVSeek.setMax(Settings.MAX_PADDING_DP - Settings.MIN_PADDING_DP);
+        padHSeek.setMax(Settings.MAX_PADDING_DP - Settings.MIN_PADDING_DP);
 
         SeekBar.OnSeekBarChangeListener live = new SeekBar.OnSeekBarChangeListener() {
             @Override public void onProgressChanged(SeekBar bar, int value, boolean fromUser) {
@@ -76,7 +83,9 @@ public class SettingsActivity extends Activity {
             }
         };
         textSeek.setOnSeekBarChangeListener(live);
-        padSeek.setOnSeekBarChangeListener(live);
+        unitSeek.setOnSeekBarChangeListener(live);
+        padVSeek.setOnSeekBarChangeListener(live);
+        padHSeek.setOnSeekBarChangeListener(live);
 
         formatGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(RadioGroup group, int checkedId) {
@@ -95,23 +104,46 @@ public class SettingsActivity extends Activity {
         findViewById(R.id.reset).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                colors[BACKGROUND] = Settings.DEFAULT_BG_COLOR;
-                colors[TEXT] = Settings.DEFAULT_TEXT_COLOR;
-                colors[VALUE] = Settings.DEFAULT_VALUE_COLOR;
-                textSeek.setProgress(Settings.DEFAULT_TEXT_SP - Settings.MIN_TEXT_SP);
-                padSeek.setProgress(Settings.DEFAULT_ROW_PADDING_DP - Settings.MIN_ROW_PADDING_DP);
-                formatGroup.check(Settings.DEFAULT_UNIT_MODE == Format.MODE_DAYS
-                        ? R.id.format_days : R.id.format_adaptive);
+                copyInto(look, new Settings.Values());
+                fillForm();
                 refreshPreview();
                 applyNow();
             }
         });
 
-        textSeek.setProgress(Settings.textSp(this) - Settings.MIN_TEXT_SP);
-        padSeek.setProgress(Settings.rowPaddingDp(this) - Settings.MIN_ROW_PADDING_DP);
-        formatGroup.check(Settings.unitMode(this) == Format.MODE_DAYS
-                ? R.id.format_days : R.id.format_adaptive);
+        fillForm();
         refreshPreview();
+    }
+
+    /** Push the working copy into the controls. */
+    private void fillForm() {
+        textSeek.setProgress(look.textSp - Settings.MIN_TEXT_SP);
+        unitSeek.setProgress(look.unitSp - Settings.MIN_UNIT_SP);
+        padVSeek.setProgress(look.paddingVerticalDp - Settings.MIN_PADDING_DP);
+        padHSeek.setProgress(look.paddingHorizontalDp - Settings.MIN_PADDING_DP);
+        formatGroup.check(look.unitMode == Format.MODE_DAYS
+                ? R.id.format_days : R.id.format_adaptive);
+    }
+
+    /** Pull the controls into the working copy. */
+    private void readForm() {
+        look.textSp = textSeek.getProgress() + Settings.MIN_TEXT_SP;
+        look.unitSp = unitSeek.getProgress() + Settings.MIN_UNIT_SP;
+        look.paddingVerticalDp = padVSeek.getProgress() + Settings.MIN_PADDING_DP;
+        look.paddingHorizontalDp = padHSeek.getProgress() + Settings.MIN_PADDING_DP;
+        look.unitMode = formatGroup.getCheckedRadioButtonId() == R.id.format_days
+                ? Format.MODE_DAYS : Format.MODE_ADAPTIVE;
+    }
+
+    private static void copyInto(Settings.Values target, Settings.Values source) {
+        target.textSp = source.textSp;
+        target.unitSp = source.unitSp;
+        target.paddingVerticalDp = source.paddingVerticalDp;
+        target.paddingHorizontalDp = source.paddingHorizontalDp;
+        target.bgColor = source.bgColor;
+        target.textColor = source.textColor;
+        target.valueColor = source.valueColor;
+        target.unitMode = source.unitMode;
     }
 
     /**
@@ -122,21 +154,8 @@ public class SettingsActivity extends Activity {
      * of the preview is that what you see is already what the widget shows.
      */
     private void applyNow() {
-        Settings.save(this, chosenTextSp(), chosenPadDp(),
-                colors[BACKGROUND], colors[TEXT], colors[VALUE], chosenMode());
-    }
-
-    private int chosenTextSp() {
-        return textSeek.getProgress() + Settings.MIN_TEXT_SP;
-    }
-
-    private int chosenPadDp() {
-        return padSeek.getProgress() + Settings.MIN_ROW_PADDING_DP;
-    }
-
-    private int chosenMode() {
-        return formatGroup.getCheckedRadioButtonId() == R.id.format_days
-                ? Format.MODE_DAYS : Format.MODE_ADAPTIVE;
+        readForm();
+        Settings.save(this, look);
     }
 
     private void buildColorRows() {
@@ -170,11 +189,11 @@ public class SettingsActivity extends Activity {
         row.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ColorPicker.show(SettingsActivity.this, title, colors[slot], allowAlpha,
+                ColorPicker.show(SettingsActivity.this, title, colorAt(slot), allowAlpha,
                         new ColorPicker.OnPicked() {
                             @Override
                             public void onPicked(int color) {
-                                colors[slot] = color;
+                                setColorAt(slot, color);
                                 refreshPreview();
                                 applyNow();
                             }
@@ -184,24 +203,38 @@ public class SettingsActivity extends Activity {
         container.addView(row);
     }
 
-    private void refreshPreview() {
-        int textSp = chosenTextSp();
-        int padDp = chosenPadDp();
-        int mode = chosenMode();
+    private int colorAt(int slot) {
+        if (slot == BACKGROUND) return look.bgColor;
+        return slot == TEXT ? look.textColor : look.valueColor;
+    }
 
-        textLabel.setText(getString(R.string.settings_text_size, textSp));
-        padLabel.setText(getString(R.string.settings_row_padding, padDp));
+    private void setColorAt(int slot, int color) {
+        if (slot == BACKGROUND) look.bgColor = color;
+        else if (slot == TEXT) look.textColor = color;
+        else look.valueColor = color;
+    }
+
+    private void refreshPreview() {
+        readForm();
+        int mode = look.unitMode;
+
+        textLabel.setText(getString(R.string.settings_text_size, look.textSp));
+        unitLabel.setText(getString(R.string.settings_unit_size, look.unitSp));
+        padVLabel.setText(getString(R.string.settings_padding_v, look.paddingVerticalDp));
+        padHLabel.setText(getString(R.string.settings_padding_h, look.paddingHorizontalDp));
 
         for (int slot = 0; slot < swatches.length; slot++) {
-            paintSwatch(swatches[slot], colors[slot]);
+            paintSwatch(swatches[slot], colorAt(slot));
         }
 
         // Same two-step tint the widget uses, so the preview cannot drift.
-        previewBg.setColorFilter(Settings.opaque(colors[BACKGROUND]));
-        previewBg.setImageAlpha(Color.alpha(colors[BACKGROUND]));
+        previewBg.setColorFilter(Settings.opaque(look.bgColor));
+        previewBg.setImageAlpha(Color.alpha(look.bgColor));
 
-        int outer = dp(Settings.outerPaddingDp(padDp));
-        previewContent.setPadding(outer, outer, outer, outer);
+        previewContent.setPadding(dp(look.outerPaddingHorizontalDp()),
+                dp(look.outerPaddingVerticalDp()),
+                dp(look.outerPaddingHorizontalDp()),
+                dp(look.outerPaddingVerticalDp()));
 
         // Measure both preview rows the same way the widget measures all of
         // its rows, so the preview shows the real column alignment.
@@ -212,11 +245,11 @@ public class SettingsActivity extends Activity {
             values.add(Format.value(elapsed, mode));
             units.add(Format.unit(elapsed, mode));
         }
-        int valueWidth = Columns.width(this, values, textSp, true);
-        int unitWidth = Columns.width(this, units, Settings.unitSp(textSp), false);
+        int valueWidth = Columns.width(this, values, look.textSp, true);
+        int unitWidth = Columns.width(this, units, look.unitSp, false);
 
-        styleRow(rowOne, 0, textSp, padDp, mode, valueWidth, unitWidth);
-        styleRow(rowTwo, 1, textSp, padDp, mode, valueWidth, unitWidth);
+        styleRow(rowOne, 0, mode, valueWidth, unitWidth);
+        styleRow(rowTwo, 1, mode, valueWidth, unitWidth);
     }
 
     private void paintSwatch(View swatch, int color) {
@@ -234,8 +267,7 @@ public class SettingsActivity extends Activity {
     }
 
     /** Real counters when there are any, otherwise a plausible stand-in. */
-    private void styleRow(View row, int index, int textSp, int padDp, int mode,
-                          int valueWidth, int unitWidth) {
+    private void styleRow(View row, int index, int mode, int valueWidth, int unitWidth) {
         String icon = index == 0 ? "🍺" : "🚬";
         String name = index == 0 ? "Alcohol" : "Nicotine";
         long elapsed = sampleElapsed(index);
@@ -245,8 +277,8 @@ public class SettingsActivity extends Activity {
             name = t.name;
         }
 
-        int vPad = dp(padDp);
-        int hPad = dp(Settings.rowPaddingHorizontalDp(padDp));
+        int vPad = dp(look.paddingVerticalDp);
+        int hPad = dp(look.paddingHorizontalDp);
         row.setPadding(hPad, vPad, hPad, vPad);
 
         TextView iconView = (TextView) row.findViewById(R.id.w_icon);
@@ -259,17 +291,17 @@ public class SettingsActivity extends Activity {
         valueView.setText(Format.value(elapsed, mode));
         unitView.setText(Format.unit(elapsed, mode));
 
-        setSp(iconView, Settings.iconSp(textSp));
-        setSp(nameView, textSp);
-        setSp(valueView, textSp);
-        setSp(unitView, Settings.unitSp(textSp));
+        setSp(iconView, look.iconSp());
+        setSp(nameView, look.textSp);
+        setSp(valueView, look.textSp);
+        setSp(unitView, look.unitSp);
 
         valueView.setMinWidth(valueWidth);
         unitView.setMinWidth(unitWidth);
 
-        nameView.setTextColor(colors[TEXT]);
-        valueView.setTextColor(colors[VALUE]);
-        unitView.setTextColor(Settings.unitColor(colors[TEXT]));
+        nameView.setTextColor(look.textColor);
+        valueView.setTextColor(look.valueColor);
+        unitView.setTextColor(look.unitColor());
     }
 
     private void setSp(TextView view, float sp) {

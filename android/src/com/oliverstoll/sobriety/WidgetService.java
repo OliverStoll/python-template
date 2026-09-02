@@ -22,11 +22,7 @@ public class WidgetService extends RemoteViewsService {
         private List<Tracker> items = new ArrayList<Tracker>();
 
         // Snapshotted in onDataSetChanged so every row of one pass agrees.
-        private int textSp = Settings.DEFAULT_TEXT_SP;
-        private int textColor = Settings.DEFAULT_TEXT_COLOR;
-        private int valueColor = Settings.DEFAULT_VALUE_COLOR;
-        private int unitColor = Settings.DEFAULT_TEXT_COLOR;
-        private int unitMode = Settings.DEFAULT_UNIT_MODE;
+        private Settings.Values look = new Settings.Values();
         private int padVerticalPx;
         private int padHorizontalPx;
         private int valueWidthPx;
@@ -40,14 +36,9 @@ public class WidgetService extends RemoteViewsService {
 
         @Override public void onDataSetChanged() {
             items = Store.load(ctx);
-            textSp = Settings.textSp(ctx);
-            textColor = Settings.textColor(ctx);
-            valueColor = Settings.valueColor(ctx);
-            unitColor = Settings.unitColor(textColor);
-            unitMode = Settings.unitMode(ctx);
-            int padDp = Settings.rowPaddingDp(ctx);
-            padVerticalPx = Settings.dpToPx(ctx, padDp);
-            padHorizontalPx = Settings.dpToPx(ctx, Settings.rowPaddingHorizontalDp(padDp));
+            look = Settings.load(ctx);
+            padVerticalPx = Settings.dpToPx(ctx, look.paddingVerticalDp);
+            padHorizontalPx = Settings.dpToPx(ctx, look.paddingHorizontalDp);
 
             // Size both columns to the widest row, so every number starts at
             // the same x and every unit does too.
@@ -55,11 +46,11 @@ public class WidgetService extends RemoteViewsService {
             List<String> units = new ArrayList<String>();
             for (Tracker t : items) {
                 long elapsed = t.elapsed();
-                values.add(Format.value(elapsed, unitMode));
-                units.add(Format.unit(elapsed, unitMode));
+                values.add(Format.value(elapsed, look.unitMode));
+                units.add(Format.unit(elapsed, look.unitMode));
             }
-            valueWidthPx = Columns.width(ctx, values, textSp, true);
-            unitWidthPx = Columns.width(ctx, units, Settings.unitSp(textSp), false);
+            valueWidthPx = Columns.width(ctx, values, look.textSp, true);
+            unitWidthPx = Columns.width(ctx, units, look.unitSp, false);
         }
 
         @Override public void onDestroy() {
@@ -78,24 +69,22 @@ public class WidgetService extends RemoteViewsService {
 
             row.setTextViewText(R.id.w_icon, t.icon);
             row.setTextViewText(R.id.w_name, t.name);
-            row.setTextViewText(R.id.w_days, Format.value(elapsed, unitMode));
-            row.setTextViewText(R.id.w_unit, Format.unit(elapsed, unitMode));
+            row.setTextViewText(R.id.w_days, Format.value(elapsed, look.unitMode));
+            row.setTextViewText(R.id.w_unit, Format.unit(elapsed, look.unitMode));
 
             row.setViewPadding(R.id.widget_item_root,
                     padHorizontalPx, padVerticalPx, padHorizontalPx, padVerticalPx);
-            row.setTextViewTextSize(R.id.w_icon, TypedValue.COMPLEX_UNIT_SP,
-                    Settings.iconSp(textSp));
-            row.setTextViewTextSize(R.id.w_name, TypedValue.COMPLEX_UNIT_SP, textSp);
-            row.setTextViewTextSize(R.id.w_days, TypedValue.COMPLEX_UNIT_SP, textSp);
-            row.setTextViewTextSize(R.id.w_unit, TypedValue.COMPLEX_UNIT_SP,
-                    Settings.unitSp(textSp));
+            row.setTextViewTextSize(R.id.w_icon, TypedValue.COMPLEX_UNIT_SP, look.iconSp());
+            row.setTextViewTextSize(R.id.w_name, TypedValue.COMPLEX_UNIT_SP, look.textSp);
+            row.setTextViewTextSize(R.id.w_days, TypedValue.COMPLEX_UNIT_SP, look.textSp);
+            row.setTextViewTextSize(R.id.w_unit, TypedValue.COMPLEX_UNIT_SP, look.unitSp);
 
             row.setInt(R.id.w_days, "setMinWidth", valueWidthPx);
             row.setInt(R.id.w_unit, "setMinWidth", unitWidthPx);
 
-            row.setTextColor(R.id.w_name, textColor);
-            row.setTextColor(R.id.w_days, valueColor);
-            row.setTextColor(R.id.w_unit, unitColor);
+            row.setTextColor(R.id.w_name, look.textColor);
+            row.setTextColor(R.id.w_days, look.valueColor);
+            row.setTextColor(R.id.w_unit, look.unitColor());
 
             row.setOnClickFillInIntent(R.id.widget_item_root, new Intent());
             // The icon is the reset button; it sits inside the row, so it wins

@@ -93,16 +93,17 @@ public class SobrietyWidget extends AppWidgetProvider {
     private static void render(Context ctx, AppWidgetManager mgr, int widgetId) {
         RemoteViews views = new RemoteViews(ctx.getPackageName(), R.layout.widget);
 
-        int outerPx = Settings.dpToPx(ctx, Settings.outerPaddingDp(Settings.rowPaddingDp(ctx)));
-        views.setViewPadding(R.id.widget_content, outerPx, outerPx, outerPx, outerPx);
+        Settings.Values look = Settings.load(ctx);
+        int outerH = Settings.dpToPx(ctx, look.outerPaddingHorizontalDp());
+        int outerV = Settings.dpToPx(ctx, look.outerPaddingVerticalDp());
+        views.setViewPadding(R.id.widget_content, outerH, outerV, outerH, outerV);
 
         // Tint the background image rather than the View's background, so the
         // rounded corners survive; alpha rides separately from the RGB tint.
-        int bg = Settings.bgColor(ctx);
-        views.setInt(R.id.widget_bg, "setColorFilter", Settings.opaque(bg));
-        views.setInt(R.id.widget_bg, "setImageAlpha", Color.alpha(bg));
+        views.setInt(R.id.widget_bg, "setColorFilter", Settings.opaque(look.bgColor));
+        views.setInt(R.id.widget_bg, "setImageAlpha", Color.alpha(look.bgColor));
 
-        views.setTextColor(R.id.widget_empty, Settings.unitColor(Settings.textColor(ctx)));
+        views.setTextColor(R.id.widget_empty, look.unitColor());
 
         Intent data = new Intent(ctx, WidgetService.class);
         data.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId);

@@ -8,8 +8,10 @@
     <string name="widget_empty">No counters yet — open Sober to add one.</string>
     <string name="settings_title">Widget appearance</string>
     <string name="settings_preview">Preview</string>
-    <string name="settings_text_size">Text size: %1$d sp</string>
-    <string name="settings_row_padding">Row spacing: %1$d dp</string>
+    <string name="settings_text_size">Name and number size: %1$d sp</string>
+    <string name="settings_unit_size">Unit size: %1$d sp</string>
+    <string name="settings_padding_v">Vertical spacing: %1$d dp</string>
+    <string name="settings_padding_h">Horizontal spacing: %1$d dp</string>
     <string name="settings_reset">Reset</string>
     <string name="settings_save">Done</string>
     <string name="settings_colors">Colours</string>

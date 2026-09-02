@@ -24,7 +24,7 @@ import java.util.List;
 public final class Columns {
 
     /** A little slack for the host process drawing with a slightly different font. */
-    private static final float SAFETY_DP = 2f;
+    private static final float SAFETY_DP = 1f;
 
     private Columns() {}
 

@@ -33,7 +33,7 @@
         android:id="@+id/w_days"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="6dp"
+        android:layout_marginLeft="4dp"
         android:gravity="end"
         android:textColor="@color/text"
         android:textSize="13sp"
@@ -44,8 +44,9 @@
         android:id="@+id/w_unit"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="4dp"
+        android:layout_marginLeft="2dp"
         android:gravity="start"
         android:textColor="@color/text_dim"
-        android:textSize="11sp" />
+        android:textSize="11sp"
+        android:includeFontPadding="false" />
 </LinearLayout>

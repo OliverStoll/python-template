@@ -55,10 +55,16 @@ echo "==> aapt2 link"
 
 echo "==> javac"
 find "$HERE/src" "$BUILD/gen" -name '*.java' > "$BUILD/sources.txt"
-javac -nowarn -encoding UTF-8 \
-    -source 8 -target 8 -bootclasspath "$ANDROID_JAR" \
-    -d "$BUILD/classes" @"$BUILD/sources.txt" 2>&1 | grep -v "bootstrap class path" || true
-[ -n "$(find "$BUILD/classes" -name '*.class' -print -quit)" ] || { echo "javac produced no classes"; exit 1; }
+# Run javac without a pipe: piping loses its exit status, and a partial
+# compile would otherwise sail through and be packaged into a broken APK.
+if ! javac -nowarn -encoding UTF-8 \
+        -source 8 -target 8 -bootclasspath "$ANDROID_JAR" \
+        -d "$BUILD/classes" @"$BUILD/sources.txt" > "$BUILD/javac.log" 2>&1; then
+    grep -v "bootstrap class path" "$BUILD/javac.log" >&2
+    echo "javac failed" >&2
+    exit 1
+fi
+grep -v "bootstrap class path" "$BUILD/javac.log" || true
 
 echo "==> dex"
 java -cp "$DX_JAR" com.android.dx.command.Main \

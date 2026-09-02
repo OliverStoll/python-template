@@ -59,8 +59,10 @@ edited over a live preview of a real widget row.
 
 | | |
 | --- | --- |
-| Text size | 8–22 sp, default 13 |
-| Row spacing | 0–14 dp, default 3 |
+| Name and number size | 8–22 sp, default 13 |
+| Unit size | 6–20 sp, default 11 |
+| Vertical spacing | 0–14 dp, default 3 |
+| Horizontal spacing | 0–14 dp, default 4 |
 | Background colour | any colour, with an opacity slider |
 | Name text colour | any colour |
 | Number colour | any colour |
