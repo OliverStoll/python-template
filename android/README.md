@@ -80,16 +80,21 @@ honestly:
 
 | Elapsed | Shown |
 | --- | --- |
-| under 1 hour | `42 minutes` |
-| under 1 day | `5 hours` |
+| under 2h24m | `42 minutes` |
+| under 1 day | `0.4 days` |
 | 1–6 days | `5 days` |
 | 7–55 days | `3 weeks` |
 | 56–364 days | `4 months` |
 | 365 days+ | `2 years` |
 
+The handover from minutes to fractions sits at a tenth of a day, not at an
+hour: one decimal place cannot express an hour, which would read `0.0 days`.
+Fractions are floored rather than rounded, so a counter 23 hours old reads
+`0.9 days` and never `1.0` before the day is actually up.
+
 *Days* stops converting past the first day — `128 days`, `730 days` — but still
-reads in minutes and hours before day one is up, since that is the whole point
-of keeping the start time. Either way the number and the unit are separate
+reads in minutes and fractions before day one is up, since that is the whole
+point of keeping the start time. Either way the number and the unit are separate
 views, so they get real spacing between them and can be coloured apart.
 
 Both columns are pinned to a common width each refresh, measured from the
@@ -214,8 +219,8 @@ JDK 9 sealed off.)
 ## Notes
 
 - The widget schedules its own wake-up for the moment its soonest counter
-  changes value — a minute apart in the first hour, an hour apart in the first
-  day, then daily. `updatePeriodMillis` bottoms out at 30 minutes, which is no
+  changes value — a minute apart at first, a tenth of a day apart once it is
+  showing fractions, then daily. `updatePeriodMillis` bottoms out at 30 minutes, which is no
   use to a counter reading in minutes; it stays configured at an hour purely as
   a backstop. The alarm is inexact on purpose, since exact alarms need a
   permission prompt on Android 12+ that a widget does not deserve.

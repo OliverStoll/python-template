@@ -18,8 +18,8 @@
     <string name="settings_color_text">Name text</string>
     <string name="settings_color_value">Number</string>
     <string name="settings_format">Number format</string>
-    <string name="settings_format_adaptive">Adaptive — minutes, hours, days, weeks, months, years</string>
-    <string name="settings_format_days">Days — minutes and hours on the first day</string>
+    <string name="settings_format_adaptive">Adaptive — minutes, days, weeks, months, years</string>
+    <string name="settings_format_days">Days — minutes, then 0.1–0.9, on the first day</string>
     <string name="reset">Reset</string>
     <string name="reset_hint">Reset this counter</string>
     <string name="history_none">No slips recorded — this is the first streak.</string>

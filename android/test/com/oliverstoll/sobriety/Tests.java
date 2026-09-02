@@ -11,6 +11,9 @@ public class Tests {
     private static int failures = 0;
 
     public static void main(String[] args) {
+        // Format uses the device locale for the decimal separator; pin it so
+        // the expected strings do not depend on where the tests run.
+        java.util.Locale.setDefault(java.util.Locale.US);
         formatting();
         colours();
         history();
@@ -35,10 +38,14 @@ public class Tests {
         eq(Format.full(59 * 1000L, adaptive), "0 minutes", "under a minute");
         eq(Format.full(minute, adaptive), "1 minute", "one minute is singular");
         eq(Format.full(42 * minute, adaptive), "42 minutes", "42 minutes");
-        eq(Format.full(hour - 1, adaptive), "59 minutes", "last minute before hours");
-        eq(Format.full(hour, adaptive), "1 hour", "one hour is singular");
-        eq(Format.full(5 * hour, adaptive), "5 hours", "five hours");
-        eq(Format.full(day - 1, adaptive), "23 hours", "last hour before days");
+        eq(Format.full(hour, adaptive), "60 minutes", "an hour is still minutes");
+
+        // A tenth of a day is where one decimal starts meaning anything.
+        eq(Format.full(Format.TENTH_OF_DAY - 1, adaptive), "143 minutes", "last minute reading");
+        eq(Format.full(Format.TENTH_OF_DAY, adaptive), "0.1 days", "first fractional reading");
+        eq(Format.full(6 * hour, adaptive), "0.2 days", "quarter of a day");
+        eq(Format.full(12 * hour, adaptive), "0.5 days", "half a day");
+        eq(Format.full(day - 1, adaptive), "0.9 days", "floored, never reads 1.0 early");
         eq(Format.full(day, adaptive), "1 day", "one day is singular");
 
         eq(Format.full(6 * day, adaptive), "6 days", "last day before weeks");
@@ -52,22 +59,26 @@ public class Tests {
         eq(Format.full(365 * day, adaptive), "1 year", "first year is singular");
         eq(Format.full(730 * day, adaptive), "2 years", "two years");
 
-        // Days mode still reads in minutes and hours before day one is up.
+        // Days mode differs only past the first day.
         eq(Format.full(42 * minute, daysOnly), "42 minutes", "days mode, minutes");
-        eq(Format.full(5 * hour, daysOnly), "5 hours", "days mode, hours");
+        eq(Format.full(6 * hour, daysOnly), "0.2 days", "days mode, fraction");
         eq(Format.full(day, daysOnly), "1 day", "days mode, one day");
         eq(Format.full(128 * day, daysOnly), "128 days", "days mode stays in days");
         eq(Format.full(730 * day, daysOnly), "730 days", "days mode never converts");
 
         eq(Format.value(128 * day, adaptive), "4", "value half");
         eq(Format.unit(128 * day, adaptive), "months", "unit half");
+        eq(Format.unit(6 * hour, adaptive), "days", "a fraction is always plural");
 
         System.out.println("-- Refresh scheduling --");
         eq(Format.millisUntilChange(0, adaptive), minute, "wake in a minute at the start");
         eq(Format.millisUntilChange(90 * 1000L, adaptive), 30 * 1000L, "mid-minute remainder");
-        eq(Format.millisUntilChange(hour, adaptive), hour, "hourly once past an hour");
-        eq(Format.millisUntilChange(hour + 15 * minute, adaptive), 45 * minute, "mid-hour remainder");
+        eq(Format.millisUntilChange(Format.TENTH_OF_DAY, adaptive), Format.TENTH_OF_DAY,
+                "a tenth of a day once fractional");
+        eq(Format.millisUntilChange(Format.TENTH_OF_DAY + hour, adaptive),
+                Format.TENTH_OF_DAY - hour, "mid-tenth remainder");
         eq(Format.millisUntilChange(day, adaptive), day, "daily once past a day");
+        eq(Format.millisUntilChange(day + 6 * hour, adaptive), 18 * hour, "mid-day remainder");
         eq(Format.millisUntilChange(-5000L, adaptive), 5000L, "counts down to a future start");
     }
 
@@ -79,10 +90,10 @@ public class Tests {
         eq(hex(ColorPicker.parseHex("#4ADE80", true, 0x80)), hex(0x804ADE80), "rgb keeps current alpha");
         eq(hex(ColorPicker.parseHex("#4ADE80", false, 0x80)), hex(0xFF4ADE80), "rgb forced opaque");
         eq(hex(ColorPicker.parseHex("#804ADE80", false, 255)), hex(0xFF4ADE80), "argb forced opaque");
-        eq(hex(ColorPicker.parseHex("#4ADE8", true, 255)), hex(null), "too short is rejected");
-        eq(hex(ColorPicker.parseHex("#", true, 255)), hex(null), "bare hash is rejected");
-        eq(hex(ColorPicker.parseHex("", true, 255)), hex(null), "empty is rejected");
-        eq(hex(ColorPicker.parseHex("#ZZZZZZ", true, 255)), hex(null), "non-hex is rejected");
+        eq(ColorPicker.parseHex("#4ADE8", true, 255), null, "too short is rejected");
+        eq(ColorPicker.parseHex("#", true, 255), null, "bare hash is rejected");
+        eq(ColorPicker.parseHex("", true, 255), null, "empty is rejected");
+        eq(ColorPicker.parseHex("#ZZZZZZ", true, 255), null, "non-hex is rejected");
 
         eq(ColorPicker.toHex(0xE610151C, true), "#E610151C", "toHex keeps alpha");
         eq(ColorPicker.toHex(0xE610151C, false), "#10151C", "toHex drops alpha");
