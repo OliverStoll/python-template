@@ -13,6 +13,7 @@ import android.widget.RadioGroup;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /** Widget appearance, edited over a live preview of a widget row. */
@@ -202,8 +203,20 @@ public class SettingsActivity extends Activity {
         int outer = dp(Settings.outerPaddingDp(padDp));
         previewContent.setPadding(outer, outer, outer, outer);
 
-        styleRow(rowOne, 0, textSp, padDp, mode);
-        styleRow(rowTwo, 1, textSp, padDp, mode);
+        // Measure both preview rows the same way the widget measures all of
+        // its rows, so the preview shows the real column alignment.
+        List<String> values = new ArrayList<String>();
+        List<String> units = new ArrayList<String>();
+        for (int i = 0; i < 2; i++) {
+            long elapsed = sampleElapsed(i);
+            values.add(Format.value(elapsed, mode));
+            units.add(Format.unit(elapsed, mode));
+        }
+        int valueWidth = Columns.width(this, values, textSp, true);
+        int unitWidth = Columns.width(this, units, Settings.unitSp(textSp), false);
+
+        styleRow(rowOne, 0, textSp, padDp, mode, valueWidth, unitWidth);
+        styleRow(rowTwo, 1, textSp, padDp, mode, valueWidth, unitWidth);
     }
 
     private void paintSwatch(View swatch, int color) {
@@ -214,17 +227,22 @@ public class SettingsActivity extends Activity {
         swatch.setBackground(shape);
     }
 
+    /** Stand-ins show a long and a short counter, so both units are visible. */
+    private long sampleElapsed(int index) {
+        if (index < trackers.size()) return trackers.get(index).elapsed();
+        return index == 0 ? 128 * Format.DAY : 5 * Format.HOUR;
+    }
+
     /** Real counters when there are any, otherwise a plausible stand-in. */
-    private void styleRow(View row, int index, int textSp, int padDp, int mode) {
+    private void styleRow(View row, int index, int textSp, int padDp, int mode,
+                          int valueWidth, int unitWidth) {
         String icon = index == 0 ? "🍺" : "🚬";
         String name = index == 0 ? "Alcohol" : "Nicotine";
-        // Stand-ins show a long and a short counter, so both units are visible.
-        long elapsed = index == 0 ? 128 * Format.DAY : 5 * Format.HOUR;
+        long elapsed = sampleElapsed(index);
         if (index < trackers.size()) {
             Tracker t = trackers.get(index);
             icon = t.icon;
             name = t.name;
-            elapsed = t.elapsed();
         }
 
         int vPad = dp(padDp);
@@ -245,6 +263,9 @@ public class SettingsActivity extends Activity {
         setSp(nameView, textSp);
         setSp(valueView, textSp);
         setSp(unitView, Settings.unitSp(textSp));
+
+        valueView.setMinWidth(valueWidth);
+        unitView.setMinWidth(unitWidth);
 
         nameView.setTextColor(colors[TEXT]);
         valueView.setTextColor(colors[VALUE]);

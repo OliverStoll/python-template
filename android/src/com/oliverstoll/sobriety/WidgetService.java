@@ -29,6 +29,8 @@ public class WidgetService extends RemoteViewsService {
         private int unitMode = Settings.DEFAULT_UNIT_MODE;
         private int padVerticalPx;
         private int padHorizontalPx;
+        private int valueWidthPx;
+        private int unitWidthPx;
 
         Factory(Context ctx) {
             this.ctx = ctx;
@@ -46,6 +48,18 @@ public class WidgetService extends RemoteViewsService {
             int padDp = Settings.rowPaddingDp(ctx);
             padVerticalPx = Settings.dpToPx(ctx, padDp);
             padHorizontalPx = Settings.dpToPx(ctx, Settings.rowPaddingHorizontalDp(padDp));
+
+            // Size both columns to the widest row, so every number starts at
+            // the same x and every unit does too.
+            List<String> values = new ArrayList<String>();
+            List<String> units = new ArrayList<String>();
+            for (Tracker t : items) {
+                long elapsed = t.elapsed();
+                values.add(Format.value(elapsed, unitMode));
+                units.add(Format.unit(elapsed, unitMode));
+            }
+            valueWidthPx = Columns.width(ctx, values, textSp, true);
+            unitWidthPx = Columns.width(ctx, units, Settings.unitSp(textSp), false);
         }
 
         @Override public void onDestroy() {
@@ -75,6 +89,9 @@ public class WidgetService extends RemoteViewsService {
             row.setTextViewTextSize(R.id.w_days, TypedValue.COMPLEX_UNIT_SP, textSp);
             row.setTextViewTextSize(R.id.w_unit, TypedValue.COMPLEX_UNIT_SP,
                     Settings.unitSp(textSp));
+
+            row.setInt(R.id.w_days, "setMinWidth", valueWidthPx);
+            row.setInt(R.id.w_unit, "setMinWidth", unitWidthPx);
 
             row.setTextColor(R.id.w_name, textColor);
             row.setTextColor(R.id.w_days, valueColor);

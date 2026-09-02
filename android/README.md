@@ -25,6 +25,7 @@ start date; the app and the widget both show the number of days since.
 | `src/…/SettingsActivity.java` | The settings screen and its live preview |
 | `src/…/ColorPicker.java` | Swatches, opacity slider, hex field |
 | `src/…/Format.java` | Elapsed time to "42 minutes" / "4 months" |
+| `src/…/Columns.java` | Measures the widget's number and unit columns |
 | `src/…/Days.java` | Date and time helpers for the start timestamp |
 | `build.sh` | Builds `out/Sober.apk` |
 | `verify.sh` | Checks the APK's signature, alignment and manifest |
@@ -90,6 +91,13 @@ honestly:
 reads in minutes and hours before day one is up, since that is the whole point
 of keeping the start time. Either way the number and the unit are separate
 views, so they get real spacing between them and can be coloured apart.
+
+Both columns are pinned to a common width each refresh, measured from the
+widest number and the widest unit actually on screen, so every row's number
+starts at the same x and so does every unit. A fixed dp would break the moment
+the text size setting moved. The widths go out as `setMinWidth`, which
+RemoteViews has been able to call since API 24; `setGravity` only became
+remotable later, so the alignment inside each column lives in the layout XML.
 
 Elapsed time is measured as a duration, not in calendar days: a counter started
 at 3pm turns over at 3pm, not at midnight. That also sidesteps daylight saving
