@@ -19,6 +19,8 @@ start date; the app and the widget both show the number of days since.
 | `src/…/SobrietyWidget.java` | `AppWidgetProvider` for the home-screen widget |
 | `src/…/WidgetService.java` | `RemoteViewsFactory` backing the widget's list |
 | `src/…/Store.java` | Persistence — one JSON blob in `SharedPreferences` |
+| `src/…/Reset.java` | The confirmation prompt shared by both reset paths |
+| `src/…/WidgetTapActivity.java` | Where widget taps land: reset, or open the app |
 | `src/…/Settings.java` | Every widget appearance value |
 | `src/…/SettingsActivity.java` | The settings screen and its live preview |
 | `src/…/ColorPicker.java` | Swatches, opacity slider, hex field |
@@ -30,6 +32,24 @@ start date; the app and the widget both show the number of days since.
 
 No Gradle, no AndroidX, no third-party runtime dependencies — just the platform
 framework, so the whole APK is 28 KB.
+
+## Resetting, and the history
+
+Tap a counter's **icon** to reset it — in the app or in the widget, same
+gesture in both. Either way a confirmation names the counter and says when the
+current streak began; confirming records a slip at that moment and restarts the
+count from there.
+
+Resets are not destructive. `startMillis` never moves; each reset appends a
+timestamp to the counter's `relapses` list, and the current streak runs from
+the latest of those. Tap a counter to open its editor and the full list of
+slips is there, newest first, each with a ✕ — removing one restores the streak
+that preceded it, so a mis-tapped reset costs nothing.
+
+The widget's list gets a single `PendingIntent` template for all its rows, so
+the icon and the row cannot point at different activities. Both go to
+`WidgetTapActivity` with different fill-in extras; it is translucent, so
+resetting from the widget shows a dialog without leaving the home screen.
 
 ## Widget appearance
 

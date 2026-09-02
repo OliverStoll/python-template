@@ -112,12 +112,15 @@ public class SobrietyWidget extends AppWidgetProvider {
         // The AdapterView swaps these two itself; don't set visibility by hand.
         views.setEmptyView(R.id.widget_list, R.id.widget_empty);
 
-        // Tapping any row opens the app.
-        Intent open = new Intent(ctx, MainActivity.class);
-        PendingIntent template = PendingIntent.getActivity(ctx, 0, open,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        // One template for the whole list; the fill-in intents decide whether a
+        // tap opens the app or resets that counter.
+        Intent tap = new Intent(ctx, WidgetTapActivity.class);
+        PendingIntent template = PendingIntent.getActivity(ctx, 0, tap,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
         views.setPendingIntentTemplate(R.id.widget_list, template);
-        views.setOnClickPendingIntent(R.id.widget_empty, template);
+        views.setOnClickPendingIntent(R.id.widget_empty,
+                PendingIntent.getActivity(ctx, 1, new Intent(ctx, MainActivity.class),
+                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
 
         mgr.updateAppWidget(widgetId, views);
         mgr.notifyAppWidgetViewDataChanged(widgetId, R.id.widget_list);

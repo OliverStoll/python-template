@@ -81,6 +81,12 @@ public class WidgetService extends RemoteViewsService {
             row.setTextColor(R.id.w_unit, unitColor);
 
             row.setOnClickFillInIntent(R.id.widget_item_root, new Intent());
+            // The icon is the reset button; it sits inside the row, so it wins
+            // the tap and the rest of the row still opens the app.
+            Intent reset = new Intent()
+                    .putExtra(WidgetTapActivity.EXTRA_ACTION, WidgetTapActivity.ACTION_RESET)
+                    .putExtra(WidgetTapActivity.EXTRA_TRACKER_ID, t.id);
+            row.setOnClickFillInIntent(R.id.w_icon, reset);
             return row;
         }
 

@@ -45,8 +45,12 @@ public final class Days {
         return new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date(millis));
     }
 
-    /** The subtitle under a counter's name: when it started. */
+    public static String formatDateTime(long millis) {
+        return formatDate(millis) + ", " + formatTime(millis);
+    }
+
+    /** The subtitle under a counter's name: when the current streak started. */
     public static String startedAt(long millis) {
-        return "since " + formatDate(millis) + ", " + formatTime(millis);
+        return "since " + formatDateTime(millis);
     }
 }

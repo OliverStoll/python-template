@@ -11,6 +11,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.TextUtils;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,7 +25,9 @@ import android.widget.ListView;
 import android.widget.TimePicker;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.List;
 
 public class MainActivity extends Activity {
@@ -112,12 +115,24 @@ public class MainActivity extends Activity {
         refresh();
     }
 
+    private void confirmReset(final Tracker tracker) {
+        Reset.confirm(this, tracker, new Reset.OnDone() {
+            @Override
+            public void onDone(boolean didReset) {
+                if (didReset) persist();
+            }
+        });
+    }
+
     /** position < 0 adds a new tracker, otherwise edits an existing one. */
     private void edit(final int position) {
         final boolean isNew = position < 0;
         final Tracker existing = isNew ? null : trackers.get(position);
 
         View form = LayoutInflater.from(this).inflate(R.layout.dialog_edit, null);
+        // Staged like the other fields: edits here only land on Save.
+        final List<Long> slips = new ArrayList<Long>(
+                isNew ? new ArrayList<Long>() : existing.relapses);
         final EditText nameIn = (EditText) form.findViewById(R.id.in_name);
         final EditText iconIn = (EditText) form.findViewById(R.id.in_icon);
         final Button dateBtn = (Button) form.findViewById(R.id.in_date);
@@ -186,6 +201,8 @@ public class MainActivity extends Activity {
             }
         });
 
+        renderHistory(form, slips);
+
         AlertDialog.Builder b = new AlertDialog.Builder(this)
                 .setTitle(isNew ? "New counter" : "Edit counter")
                 .setView(form)
@@ -205,6 +222,8 @@ public class MainActivity extends Activity {
                             existing.name = name;
                             existing.icon = icon;
                             existing.startMillis = chosen[0];
+                            existing.relapses.clear();
+                            existing.relapses.addAll(slips);
                         }
                         persist();
                     }
@@ -236,6 +255,56 @@ public class MainActivity extends Activity {
                 .show();
     }
 
+    /** Lists every recorded slip, newest first, each removable. */
+    private void renderHistory(final View form, final List<Long> slips) {
+        TextView label = (TextView) form.findViewById(R.id.history_label);
+        LinearLayout container = (LinearLayout) form.findViewById(R.id.history);
+        container.removeAllViews();
+
+        if (slips.isEmpty()) {
+            label.setText(R.string.history_none);
+            return;
+        }
+        label.setText(getString(R.string.history_some, slips.size()));
+
+        List<Long> newestFirst = new ArrayList<Long>(slips);
+        Collections.sort(newestFirst);
+        Collections.reverse(newestFirst);
+
+        for (int i = 0; i < newestFirst.size(); i++) {
+            final Long when = newestFirst.get(i);
+
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(0, dp(6), 0, dp(6));
+
+            TextView stamp = new TextView(this);
+            stamp.setText(Days.formatDateTime(when.longValue()));
+            stamp.setTextSize(14);
+            stamp.setTextColor(getResources().getColor(R.color.text));
+            stamp.setLayoutParams(new LinearLayout.LayoutParams(0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+            row.addView(stamp);
+
+            TextView remove = new TextView(this);
+            remove.setText("✕");
+            remove.setTextSize(16);
+            remove.setTextColor(getResources().getColor(R.color.text_dim));
+            remove.setPadding(dp(14), dp(2), dp(4), dp(2));
+            remove.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    slips.remove(when);
+                    renderHistory(form, slips);
+                }
+            });
+            row.addView(remove);
+
+            container.addView(row);
+        }
+    }
+
     private int dp(int value) {
         return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
     }
@@ -255,10 +324,18 @@ public class MainActivity extends Activity {
                 v = LayoutInflater.from((Context) MainActivity.this)
                         .inflate(R.layout.row, parent, false);
             }
-            Tracker t = trackers.get(position);
+            final Tracker t = trackers.get(position);
             long elapsed = t.elapsed();
             int mode = Settings.unitMode(MainActivity.this);
-            ((TextView) v.findViewById(R.id.icon)).setText(t.icon);
+            TextView iconView = (TextView) v.findViewById(R.id.icon);
+            iconView.setText(t.icon);
+            // The icon resets, matching the widget. The rest of the row edits.
+            iconView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    confirmReset(t);
+                }
+            });
             ((TextView) v.findViewById(R.id.name)).setText(t.name);
             ((TextView) v.findViewById(R.id.since)).setText(Days.startedAt(t.startMillis));
             TextView dayView = (TextView) v.findViewById(R.id.days);

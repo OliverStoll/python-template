@@ -13,6 +13,7 @@ public class Tests {
     public static void main(String[] args) {
         formatting();
         colours();
+        history();
         System.out.println(failures == 0
                 ? "\nall passed"
                 : "\n" + failures + " FAILED");
@@ -72,24 +73,92 @@ public class Tests {
 
     private static void colours() {
         System.out.println("-- Colour parsing --");
-        eq(ColorPicker.parseHex("#FF4ADE80", true, 255), 0xFF4ADE80, "full argb");
-        eq(ColorPicker.parseHex("FF4ADE80", true, 255), 0xFF4ADE80, "leading hash optional");
-        eq(ColorPicker.parseHex("  #E610151C ", true, 255), 0xE610151C, "surrounding space");
-        eq(ColorPicker.parseHex("#4ADE80", true, 0x80), 0x804ADE80, "rgb keeps current alpha");
-        eq(ColorPicker.parseHex("#4ADE80", false, 0x80), 0xFF4ADE80, "rgb forced opaque");
-        eq(ColorPicker.parseHex("#804ADE80", false, 255), 0xFF4ADE80, "argb forced opaque");
-        eq(ColorPicker.parseHex("#4ADE8", true, 255), null, "too short is rejected");
-        eq(ColorPicker.parseHex("#", true, 255), null, "bare hash is rejected");
-        eq(ColorPicker.parseHex("", true, 255), null, "empty is rejected");
-        eq(ColorPicker.parseHex("#ZZZZZZ", true, 255), null, "non-hex is rejected");
+        eq(hex(ColorPicker.parseHex("#FF4ADE80", true, 255)), hex(0xFF4ADE80), "full argb");
+        eq(hex(ColorPicker.parseHex("FF4ADE80", true, 255)), hex(0xFF4ADE80), "leading hash optional");
+        eq(hex(ColorPicker.parseHex("  #E610151C ", true, 255)), hex(0xE610151C), "surrounding space");
+        eq(hex(ColorPicker.parseHex("#4ADE80", true, 0x80)), hex(0x804ADE80), "rgb keeps current alpha");
+        eq(hex(ColorPicker.parseHex("#4ADE80", false, 0x80)), hex(0xFF4ADE80), "rgb forced opaque");
+        eq(hex(ColorPicker.parseHex("#804ADE80", false, 255)), hex(0xFF4ADE80), "argb forced opaque");
+        eq(hex(ColorPicker.parseHex("#4ADE8", true, 255)), hex(null), "too short is rejected");
+        eq(hex(ColorPicker.parseHex("#", true, 255)), hex(null), "bare hash is rejected");
+        eq(hex(ColorPicker.parseHex("", true, 255)), hex(null), "empty is rejected");
+        eq(hex(ColorPicker.parseHex("#ZZZZZZ", true, 255)), hex(null), "non-hex is rejected");
 
         eq(ColorPicker.toHex(0xE610151C, true), "#E610151C", "toHex keeps alpha");
         eq(ColorPicker.toHex(0xE610151C, false), "#10151C", "toHex drops alpha");
 
-        eq(Settings.withAlpha(0xFF4ADE80, 0x80), 0x804ADE80, "withAlpha");
-        eq(Settings.withAlpha(0xFF4ADE80, 999), 0xFF4ADE80, "withAlpha clamps high");
-        eq(Settings.withAlpha(0xFF4ADE80, -5), 0x004ADE80, "withAlpha clamps low");
-        eq(Settings.opaque(0x004ADE80), 0xFF4ADE80, "opaque");
+        eq(hex(Settings.withAlpha(0xFF4ADE80, 0x80)), hex(0x804ADE80), "withAlpha");
+        eq(hex(Settings.withAlpha(0xFF4ADE80, 999)), hex(0xFF4ADE80), "withAlpha clamps high");
+        eq(hex(Settings.withAlpha(0xFF4ADE80, -5)), hex(0x004ADE80), "withAlpha clamps low");
+        eq(hex(Settings.opaque(0x004ADE80)), hex(0xFF4ADE80), "opaque");
+    }
+
+    private static void history() {
+        System.out.println("-- Relapse history --");
+        long day = Format.DAY;
+        long now = System.currentTimeMillis();
+        long begin = now - 100 * day;
+
+        Tracker t = new Tracker("id1", "🍺", "Alcohol", begin);
+        eq(t.currentStart(), begin, "no slips means the original start");
+        eq(t.relapses.size(), 0, "starts with an empty history");
+
+        long firstSlip = now - 40 * day;
+        long secondSlip = now - 10 * day;
+        // Recorded out of order on purpose: the list must still come back sorted.
+        t.recordRelapse(secondSlip);
+        t.recordRelapse(firstSlip);
+        eq(t.relapses.get(0), firstSlip, "history is kept ascending");
+        eq(t.currentStart(), secondSlip, "the streak runs from the latest slip");
+        eq(t.relapsesNewestFirst().get(0), secondSlip, "newest first for display");
+
+        // Undoing a slip is the whole reason the history is kept.
+        t.relapses.remove(Long.valueOf(secondSlip));
+        eq(t.currentStart(), firstSlip, "removing a slip restores the earlier streak");
+        t.relapses.remove(Long.valueOf(firstSlip));
+        eq(t.currentStart(), begin, "removing every slip restores the original start");
+
+        System.out.println("-- Storage round-trip --");
+        Tracker saved = new Tracker("id2", "🚬", "Nicotine", begin);
+        saved.recordRelapse(firstSlip);
+        saved.recordRelapse(secondSlip);
+        Tracker loaded = roundTrip(saved);
+        eq(loaded.id, "id2", "id survives");
+        eq(loaded.icon, "🚬", "icon survives");
+        eq(loaded.name, "Nicotine", "name survives");
+        eq(loaded.startMillis, begin, "start survives");
+        eq(loaded.relapses.size(), 2, "both slips survive");
+        eq(loaded.currentStart(), secondSlip, "streak start survives");
+
+        // What a counter saved by v1.5 or earlier looks like.
+        Tracker legacy = Tracker.fromJson(json(
+                "{\"id\":\"old\",\"icon\":\"☕\",\"name\":\"Coffee\",\"start\":" + begin + "}"));
+        eq(legacy.relapses.size(), 0, "a record with no relapses field loads");
+        eq(legacy.currentStart(), begin, "and counts from its original start");
+
+        Tracker empty = Tracker.fromJson(json("{}"));
+        eq(empty.relapses.size(), 0, "an empty record does not throw");
+    }
+
+    /** Colours read as hex; everything else reads as itself. */
+    private static String hex(Integer color) {
+        return color == null ? "null" : String.format("#%08X", color);
+    }
+
+    private static Tracker roundTrip(Tracker t) {
+        try {
+            return Tracker.fromJson(new org.json.JSONObject(t.toJson().toString()));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static org.json.JSONObject json(String raw) {
+        try {
+            return new org.json.JSONObject(raw);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static void eq(Object actual, Object expected, String what) {
@@ -102,7 +171,6 @@ public class Tests {
 
     private static String render(Object value) {
         if (value == null) return "null";
-        if (value instanceof Integer) return String.format("#%08X", (Integer) value);
         if (value instanceof Long) return value + "ms";
         return value.toString();
     }
