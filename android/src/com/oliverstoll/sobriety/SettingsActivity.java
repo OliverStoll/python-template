@@ -40,10 +40,12 @@ public class SettingsActivity extends Activity {
     private SeekBar unitSeek;
     private SeekBar padVSeek;
     private SeekBar padHSeek;
+    private SeekBar padSpaceVSeek;
     private TextView textLabel;
     private TextView unitLabel;
     private TextView padVLabel;
     private TextView padHLabel;
+    private TextView padSpaceVLabel;
     private RadioGroup formatGroup;
     private ImageView previewBg;
     private View previewContent;
@@ -68,10 +70,12 @@ public class SettingsActivity extends Activity {
         unitLabel = (TextView) findViewById(R.id.label_unit_size);
         padVLabel = (TextView) findViewById(R.id.label_padding_v);
         padHLabel = (TextView) findViewById(R.id.label_padding_h);
+        padSpaceVLabel = (TextView) findViewById(R.id.label_spacing_v);
         textSeek = (SeekBar) findViewById(R.id.seek_text_size);
         unitSeek = (SeekBar) findViewById(R.id.seek_unit_size);
         padVSeek = (SeekBar) findViewById(R.id.seek_padding_v);
         padHSeek = (SeekBar) findViewById(R.id.seek_padding_h);
+        padSpaceVSeek = (SeekBar) findViewById(R.id.seek_spacing_v);
         formatGroup = (RadioGroup) findViewById(R.id.format_group);
 
         copyInto(look, Settings.load(this));
@@ -81,6 +85,7 @@ public class SettingsActivity extends Activity {
         unitSeek.setMax(Settings.MAX_UNIT_SP - Settings.MIN_UNIT_SP);
         padVSeek.setMax(Settings.MAX_PADDING_DP - Settings.MIN_PADDING_DP);
         padHSeek.setMax(Settings.MAX_PADDING_DP - Settings.MIN_PADDING_DP);
+        padSpaceVSeek.setMax(Settings.MAX_SPACING_DP - Settings.MIN_SPACING_DP);
 
         SeekBar.OnSeekBarChangeListener live = new SeekBar.OnSeekBarChangeListener() {
             @Override public void onProgressChanged(SeekBar bar, int value, boolean fromUser) {
@@ -100,6 +105,7 @@ public class SettingsActivity extends Activity {
         unitSeek.setOnSeekBarChangeListener(live);
         padVSeek.setOnSeekBarChangeListener(live);
         padHSeek.setOnSeekBarChangeListener(live);
+        padSpaceVSeek.setOnSeekBarChangeListener(live);
 
         formatGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(RadioGroup group, int checkedId) {
@@ -148,6 +154,7 @@ public class SettingsActivity extends Activity {
             unitSeek.setProgress(look.unitSp - Settings.MIN_UNIT_SP);
             padVSeek.setProgress(look.paddingVerticalDp - Settings.MIN_PADDING_DP);
             padHSeek.setProgress(look.paddingHorizontalDp - Settings.MIN_PADDING_DP);
+            padSpaceVSeek.setProgress(look.spacingVerticalDp - Settings.MIN_SPACING_DP);
             formatGroup.check(look.unitMode == Format.MODE_DAYS
                     ? R.id.format_days : R.id.format_adaptive);
         } finally {
@@ -161,6 +168,7 @@ public class SettingsActivity extends Activity {
         look.unitSp = unitSeek.getProgress() + Settings.MIN_UNIT_SP;
         look.paddingVerticalDp = padVSeek.getProgress() + Settings.MIN_PADDING_DP;
         look.paddingHorizontalDp = padHSeek.getProgress() + Settings.MIN_PADDING_DP;
+        look.spacingVerticalDp = padSpaceVSeek.getProgress() + Settings.MIN_SPACING_DP;
         look.unitMode = formatGroup.getCheckedRadioButtonId() == R.id.format_days
                 ? Format.MODE_DAYS : Format.MODE_ADAPTIVE;
     }
@@ -170,6 +178,7 @@ public class SettingsActivity extends Activity {
         target.unitSp = source.unitSp;
         target.paddingVerticalDp = source.paddingVerticalDp;
         target.paddingHorizontalDp = source.paddingHorizontalDp;
+        target.spacingVerticalDp = source.spacingVerticalDp;
         target.bgColor = source.bgColor;
         target.textColor = source.textColor;
         target.valueColor = source.valueColor;
@@ -251,6 +260,7 @@ public class SettingsActivity extends Activity {
         unitLabel.setText(getString(R.string.settings_unit_size, look.unitSp));
         padVLabel.setText(getString(R.string.settings_padding_v, look.paddingVerticalDp));
         padHLabel.setText(getString(R.string.settings_padding_h, look.paddingHorizontalDp));
+        padSpaceVLabel.setText(getString(R.string.settings_spacing_v, look.spacingVerticalDp));
 
         for (int slot = 0; slot < swatches.length; slot++) {
             paintSwatch(swatches[slot], colorAt(slot));
@@ -308,7 +318,21 @@ public class SettingsActivity extends Activity {
 
         int vPad = dp(look.paddingVerticalDp);
         int hPad = dp(look.paddingHorizontalDp);
+        int spacing = dp(look.spacingVerticalDp);
         row.setPadding(hPad, vPad, hPad, vPad);
+
+        LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) row.getLayoutParams();
+        if (params == null) {
+            params = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+        }
+        if (index == 0) {
+            params.bottomMargin = spacing;
+        } else {
+            params.bottomMargin = 0;
+        }
+        row.setLayoutParams(params);
 
         TextView iconView = (TextView) row.findViewById(R.id.w_icon);
         TextView nameView = (TextView) row.findViewById(R.id.w_name);

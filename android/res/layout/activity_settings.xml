@@ -112,6 +112,16 @@
                 android:layout_height="wrap_content" />
 
             <TextView
+                android:id="@+id/label_spacing_v"
+                style="@style/SectionLabel"
+                android:layout_marginTop="8dp" />
+
+            <SeekBar
+                android:id="@+id/seek_spacing_v"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <TextView
                 style="@style/SectionLabel"
                 android:text="@string/settings_colors"
                 android:layout_marginTop="20dp" />

@@ -31,6 +31,10 @@ public final class Settings {
     public static final int DEFAULT_PADDING_H_DP = 4;
     public static final int MIN_PADDING_DP = 0;
     public static final int MAX_PADDING_DP = 14;
+    /** Spacing between rows, in dp. */
+    public static final int DEFAULT_SPACING_V_DP = 2;
+    public static final int MIN_SPACING_DP = 0;
+    public static final int MAX_SPACING_DP = 14;
 
     public static final int DEFAULT_BG_COLOR = 0xE610151C;
     public static final int DEFAULT_TEXT_COLOR = 0xFFF2F5F8;
@@ -42,6 +46,7 @@ public final class Settings {
     private static final String KEY_UNIT_SP = "widget_unit_sp";
     private static final String KEY_PADDING_V_DP = "widget_row_padding_dp";
     private static final String KEY_PADDING_H_DP = "widget_row_padding_h_dp";
+    private static final String KEY_SPACING_V_DP = "widget_row_spacing_v_dp";
     private static final String KEY_BG_COLOR = "widget_bg_color";
     private static final String KEY_TEXT_COLOR = "widget_text_color";
     private static final String KEY_VALUE_COLOR = "widget_value_color";
@@ -49,7 +54,7 @@ public final class Settings {
     private static final String KEY_SCHEMA = "settings_schema";
 
     /** Bumped when stored settings need repairing on upgrade. */
-    private static final int SCHEMA = 2;
+    private static final int SCHEMA = 3;
 
     private Settings() {}
 
@@ -59,6 +64,7 @@ public final class Settings {
         public int unitSp = DEFAULT_UNIT_SP;
         public int paddingVerticalDp = DEFAULT_PADDING_V_DP;
         public int paddingHorizontalDp = DEFAULT_PADDING_H_DP;
+        public int spacingVerticalDp = DEFAULT_SPACING_V_DP;
         public int bgColor = DEFAULT_BG_COLOR;
         public int textColor = DEFAULT_TEXT_COLOR;
         public int valueColor = DEFAULT_VALUE_COLOR;
@@ -74,9 +80,9 @@ public final class Settings {
             return textSp + 2f;
         }
 
-        /** The widget's outer margin, a step wider than the rows sit. */
+        /** The widget's outer margin, combining padding and spacing. */
         public int outerPaddingVerticalDp() {
-            return paddingVerticalDp + 3;
+            return spacingVerticalDp + 3;
         }
 
         public int outerPaddingHorizontalDp() {
@@ -98,6 +104,8 @@ public final class Settings {
                 MIN_PADDING_DP, MAX_PADDING_DP);
         v.paddingHorizontalDp = clamp(p.getInt(KEY_PADDING_H_DP, DEFAULT_PADDING_H_DP),
                 MIN_PADDING_DP, MAX_PADDING_DP);
+        v.spacingVerticalDp = clamp(p.getInt(KEY_SPACING_V_DP, DEFAULT_SPACING_V_DP),
+                MIN_SPACING_DP, MAX_SPACING_DP);
         v.bgColor = p.getInt(KEY_BG_COLOR, DEFAULT_BG_COLOR);
         v.textColor = p.getInt(KEY_TEXT_COLOR, DEFAULT_TEXT_COLOR);
         v.valueColor = p.getInt(KEY_VALUE_COLOR, DEFAULT_VALUE_COLOR);
@@ -130,6 +138,8 @@ public final class Settings {
                         clamp(v.paddingVerticalDp, MIN_PADDING_DP, MAX_PADDING_DP))
                 .putInt(KEY_PADDING_H_DP,
                         clamp(v.paddingHorizontalDp, MIN_PADDING_DP, MAX_PADDING_DP))
+                .putInt(KEY_SPACING_V_DP,
+                        clamp(v.spacingVerticalDp, MIN_SPACING_DP, MAX_SPACING_DP))
                 .putInt(KEY_BG_COLOR, v.bgColor)
                 .putInt(KEY_TEXT_COLOR, v.textColor)
                 .putInt(KEY_VALUE_COLOR, v.valueColor)
