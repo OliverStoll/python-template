@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- The background is an image, not a View background, so its colour and
+         opacity can be set from RemoteViews without losing the rounded corners. -->
+    <ImageView
+        android:id="@+id/widget_bg"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="fitXY"
+        android:src="@drawable/widget_bg_shape"
+        android:contentDescription="@null" />
+
+    <LinearLayout
+        android:id="@+id/widget_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="6dp">
+
+        <ListView
+            android:id="@+id/widget_list"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:divider="@null"
+            android:dividerHeight="0dp" />
+
+        <TextView
+            android:id="@+id/widget_empty"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="@string/widget_empty"
+            android:textColor="@color/text_dim"
+            android:textSize="12sp" />
+    </LinearLayout>
+</FrameLayout>
