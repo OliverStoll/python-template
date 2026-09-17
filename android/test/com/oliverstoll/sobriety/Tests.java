@@ -46,7 +46,9 @@ public class Tests {
         eq(Format.full(6 * hour, adaptive), "0.2 days", "quarter of a day");
         eq(Format.full(12 * hour, adaptive), "0.5 days", "half a day");
         eq(Format.full(day - 1, adaptive), "0.9 days", "floored, never reads 1.0 early");
-        eq(Format.full(day, adaptive), "1 day", "one day is singular");
+        eq(Format.full(day, adaptive), "1.0 days", "one day with decimal");
+        eq(Format.full(2 * day, adaptive), "2.0 days", "two days with decimal");
+        eq(Format.full(3 * day, adaptive), "3.0 days", "three days with decimal");
 
         eq(Format.full(6 * day, adaptive), "6 days", "last day before weeks");
         eq(Format.full(7 * day, adaptive), "1 week", "first week is singular");
@@ -62,7 +64,7 @@ public class Tests {
         // Days mode differs only past the first day.
         eq(Format.full(42 * minute, daysOnly), "42 minutes", "days mode, minutes");
         eq(Format.full(6 * hour, daysOnly), "0.2 days", "days mode, fraction");
-        eq(Format.full(day, daysOnly), "1 day", "days mode, one day");
+        eq(Format.full(day, daysOnly), "1.0 days", "days mode, one day with decimal");
         eq(Format.full(128 * day, daysOnly), "128 days", "days mode stays in days");
         eq(Format.full(730 * day, daysOnly), "730 days", "days mode never converts");
 
@@ -77,8 +79,8 @@ public class Tests {
                 "a tenth of a day once fractional");
         eq(Format.millisUntilChange(Format.TENTH_OF_DAY + hour, adaptive),
                 Format.TENTH_OF_DAY - hour, "mid-tenth remainder");
-        eq(Format.millisUntilChange(day, adaptive), day, "daily once past a day");
-        eq(Format.millisUntilChange(day + 6 * hour, adaptive), 18 * hour, "mid-day remainder");
+        eq(Format.millisUntilChange(day, adaptive), Format.TENTH_OF_DAY, "at 1 day, step is tenth");
+        eq(Format.millisUntilChange(day + 6 * hour, adaptive), 4320000L, "mid-day remainder tenth-based");
         eq(Format.millisUntilChange(-5000L, adaptive), 5000L, "counts down to a future start");
     }
 

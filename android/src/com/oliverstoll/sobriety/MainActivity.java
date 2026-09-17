@@ -24,6 +24,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TimePicker;
 import android.widget.TextView;
+import android.text.TextWatcher;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -31,10 +32,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class MainActivity extends Activity {
-
-    private static final String[] SUGGESTED_ICONS = {
-            "🍺", "🚬", "🍩", "🎰", "📱", "☕", "🍷", "💊", "🥤", "🎮", "🛒", "✨"
-    };
 
     /** Keeps a minutes-old counter ticking while the list is on screen. */
     private static final long TICK_MS = 20000L;
@@ -59,6 +56,7 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         trackers = Store.load(this);
+        sortTrackers();
         list = (ListView) findViewById(R.id.list);
         empty = findViewById(R.id.empty);
         adapter = new Adapter();
@@ -93,6 +91,7 @@ public class MainActivity extends Activity {
         super.onResume();
         // Time has passed while the app sat in the background.
         trackers = Store.load(this);
+        sortTrackers();
         refresh();
         ticker.postDelayed(tick, TICK_MS);
     }
@@ -143,24 +142,27 @@ public class MainActivity extends Activity {
         // first hours readable instead of sitting at "0 days" until midnight.
         final long[] chosen = { isNew ? System.currentTimeMillis() : existing.startMillis };
         nameIn.setText(isNew ? "" : existing.name);
-        iconIn.setText(isNew ? SUGGESTED_ICONS[0] : existing.icon);
+        iconIn.setText(isNew ? "✨" : existing.icon);
         dateBtn.setText(Days.formatDate(chosen[0]));
         timeBtn.setText(Days.formatTime(chosen[0]));
 
-        for (int i = 0; i < SUGGESTED_ICONS.length; i++) {
-            final String emoji = SUGGESTED_ICONS[i];
-            TextView chip = new TextView(this);
-            chip.setText(emoji);
-            chip.setTextSize(22);
-            chip.setPadding(dp(10), dp(6), dp(10), dp(6));
-            chip.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    iconIn.setText(emoji);
-                }
-            });
-            picker.addView(chip);
-        }
+        final EditText searchField = new EditText(this);
+        searchField.setHint("Search icons");
+        searchField.setTextSize(14);
+        picker.addView(searchField, 0);
+
+        final LinearLayout grid = new LinearLayout(this);
+        grid.setOrientation(LinearLayout.VERTICAL);
+        picker.addView(grid);
+
+        searchField.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override public void afterTextChanged(android.text.Editable s) {
+                updateIcons(grid, searchField.getText().toString(), iconIn);
+            }
+        });
+        updateIcons(grid, "", iconIn);
 
         dateBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -307,6 +309,50 @@ public class MainActivity extends Activity {
 
     private int dp(int value) {
         return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
+    }
+
+    private void sortTrackers() {
+        Collections.sort(trackers, new java.util.Comparator<Tracker>() {
+            @Override public int compare(Tracker a, Tracker b) {
+                long elapsedA = a.elapsed();
+                long elapsedB = b.elapsed();
+                return Long.compare(elapsedA, elapsedB);
+            }
+        });
+    }
+
+    private void updateIcons(LinearLayout grid, String query, final EditText iconIn) {
+        grid.removeAllViews();
+        List<Icons.Icon> results = Icons.search(query);
+        final int cols = 6;
+        LinearLayout row = null;
+        int colCount = 0;
+
+        for (final Icons.Icon icon : results) {
+            if (colCount == 0) {
+                row = new LinearLayout(this);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                grid.addView(row);
+            }
+
+            final String emoji = icon.emoji;
+            TextView chip = new TextView(this);
+            chip.setText(emoji);
+            chip.setTextSize(20);
+            chip.setPadding(dp(8), dp(6), dp(8), dp(6));
+            chip.setLayoutParams(new LinearLayout.LayoutParams(0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+            chip.setGravity(Gravity.CENTER);
+            chip.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    iconIn.setText(emoji);
+                }
+            });
+            row.addView(chip);
+
+            colCount = (colCount + 1) % cols;
+        }
     }
 
     private class Adapter extends BaseAdapter {

@@ -7,6 +7,8 @@ import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class WidgetService extends RemoteViewsService {
@@ -36,6 +38,13 @@ public class WidgetService extends RemoteViewsService {
 
         @Override public void onDataSetChanged() {
             items = Store.load(ctx);
+            Collections.sort(items, new Comparator<Tracker>() {
+                @Override public int compare(Tracker a, Tracker b) {
+                    long elapsedA = a.elapsed();
+                    long elapsedB = b.elapsed();
+                    return Long.compare(elapsedA, elapsedB);
+                }
+            });
             look = Settings.load(ctx);
             padVerticalPx = Settings.dpToPx(ctx, look.paddingVerticalDp);
             padHorizontalPx = Settings.dpToPx(ctx, look.paddingHorizontalDp);
@@ -82,9 +91,10 @@ public class WidgetService extends RemoteViewsService {
             row.setInt(R.id.w_days, "setMinWidth", valueWidthPx);
             row.setInt(R.id.w_unit, "setMinWidth", unitWidthPx);
 
-            row.setTextColor(R.id.w_name, look.textColor);
-            row.setTextColor(R.id.w_days, look.valueColor);
-            row.setTextColor(R.id.w_unit, look.unitColor());
+            float opacity = Format.opacityFactor(elapsed);
+            row.setTextColor(R.id.w_name, applyOpacity(look.textColor, opacity));
+            row.setTextColor(R.id.w_days, applyOpacity(look.valueColor, opacity));
+            row.setTextColor(R.id.w_unit, applyOpacity(look.unitColor(), opacity));
 
             row.setOnClickFillInIntent(R.id.widget_item_root, new Intent());
             // The icon is the reset button; it sits inside the row, so it wins
@@ -110,6 +120,11 @@ public class WidgetService extends RemoteViewsService {
 
         @Override public boolean hasStableIds() {
             return false;
+        }
+
+        private static int applyOpacity(int color, float opacity) {
+            int alpha = Math.round(android.graphics.Color.alpha(color) * opacity);
+            return Settings.withAlpha(color, alpha);
         }
     }
 }

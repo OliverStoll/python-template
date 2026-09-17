@@ -41,6 +41,10 @@ public final class Format {
     private static final long MONTH = 30L * DAY;
     private static final long YEAR = 365L * DAY;
 
+    private static final long THREE_DAYS = 3L * DAY;
+    private static final long TWO_WEEKS = 14L * DAY;
+    private static final long THREE_MONTHS = 90L * DAY;
+
     private static final int TIER_FUTURE = 0;
     private static final int TIER_MINUTES = 1;
     private static final int TIER_PART_DAY = 2;
@@ -50,6 +54,21 @@ public final class Format {
     private static final int TIER_YEARS = 6;
 
     private Format() {}
+
+    /** Opacity factor (0.5 to 1.0) for progressive graying as streak lengthens. */
+    public static float opacityFactor(long elapsed) {
+        if (elapsed < 0) return 1.0f;
+        if (elapsed < THREE_DAYS) return 1.0f;
+        if (elapsed < TWO_WEEKS) {
+            float progress = (float) elapsed / TWO_WEEKS;
+            return 1.0f - (progress * 0.35f);
+        }
+        if (elapsed < THREE_MONTHS) {
+            float progress = (float) (elapsed - TWO_WEEKS) / (THREE_MONTHS - TWO_WEEKS);
+            return 0.65f - (progress * 0.15f);
+        }
+        return 0.5f;
+    }
 
     /** The bare number, e.g. "42", "0.3" or "128". "—" for a future start. */
     public static String value(long elapsed, int mode) {
@@ -77,7 +96,7 @@ public final class Format {
     public static String unit(long elapsed, int mode) {
         int tier = tier(elapsed, mode);
         if (tier == TIER_FUTURE) return "";
-        // A fraction of a day is always plural — it only ever runs 0.1 to 0.9.
+        // A fraction of a day is always plural — includes 0.1 to 3.0.
         if (tier == TIER_PART_DAY) return "days";
 
         String name = unitName(tier);
@@ -103,7 +122,7 @@ public final class Format {
     private static int tier(long elapsed, int mode) {
         if (elapsed < 0) return TIER_FUTURE;
         if (elapsed < FRACTION_START) return TIER_MINUTES;
-        if (elapsed < DAY) return TIER_PART_DAY;
+        if (elapsed <= THREE_DAYS) return TIER_PART_DAY;
         if (mode == MODE_DAYS || elapsed < WEEK) return TIER_DAYS;
         if (elapsed < WEEKS_LIMIT) return TIER_WEEKS;
         if (elapsed < YEAR) return TIER_MONTHS;
